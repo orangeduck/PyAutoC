@@ -4,12 +4,12 @@
 #include "Python.h"
 #include "PyAutoType.h"
 
-#define PyAutoStruct_Get(type, cstruct, member) PyAutoStruct_GetByName_TypeId(PyTypeId(type), cstruct, #member)
-#define PyAutoStruct_GetMember(type, cstruct, member) PyAutoStruct_GetByName_TypeId(PyTypeId(type), cstruct, member)
+#define PyAutoStruct_Get(type, cstruct, member) PyAutoStruct_GetMember_TypeId(PyTypeId(type), cstruct, #member)
+#define PyAutoStruct_GetMember(type, cstruct, member) PyAutoStruct_GetMember_TypeId(PyTypeId(type), cstruct, member)
 PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* member_name);
 
-#define PyAutoStruct_Set(type, cstruct, member, val) PyAutoStruct_SetByName_TypeId(PyTypeId(type), cstruct, #member, val)
-#define PyAutoStruct_SetMember(type, cstruct, member, val) PyAutoStruct_SetByName_TypeId(PyTypeId(type), cstruct, member, val)
+#define PyAutoStruct_Set(type, cstruct, member, val) PyAutoStruct_SetMember_TypeId(PyTypeId(type), cstruct, #member, val)
+#define PyAutoStruct_SetMember(type, cstruct, member, val) PyAutoStruct_SetMember_TypeId(PyTypeId(type), cstruct, member, val)
 void PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val);
 
 #define PyAutoStruct_Register(type) PyAutoStruct_Register_TypeId(PyTypeId(type))

@@ -16,7 +16,13 @@ PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val) {
   
   for(int i = 0; i < num_convert_from_funcs; i++) {
     if (type_id == convert_from_type_ids[i]) {
-      return convert_from_funcs[i](c_val);
+      PyObject* ret = convert_from_funcs[i](c_val);
+      if (PyErr_Occurred()) {
+        PyErr_Print();
+        PyAutoError("Could not convert type '%s' to PyObject", PyAutoType_Name(type_id));
+      } else {
+        return ret;
+      }
     }
   }
   
@@ -28,7 +34,13 @@ void PyAutoConvert_To_TypeId(PyAutoType type_id, PyObject* py_val, void* c_out) 
 
   for(int i = 0; i < num_convert_to_funcs; i++) {
     if (type_id == convert_to_type_ids[i]) {
-      return convert_to_funcs[i](py_val, c_out);
+      convert_to_funcs[i](py_val, c_out);
+      if (PyErr_Occurred()) {
+        PyErr_Print();
+        PyAutoError("Could not convert type '%s' from PyObject", PyAutoType_Name(type_id));
+      } else {
+       return;
+      }
     }
   }
   
