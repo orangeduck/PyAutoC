@@ -5,24 +5,24 @@
 #include "PyAutoType.h"
 #include "PyAutoFunctionMacros.h"
 
-PyObject* PyAutoFunc_Call(void* c_func, PyObject* args);
-PyObject* PyAutoFunc_CallByName(char* c_func_name, PyObject* args);
+PyObject* PyAutoFunction_Call(void* c_func, PyObject* args);
+PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args);
 
-#define PyAutoFunc_Register_Args0(func, ret_t) PyAutoFunc_Register_Args0_Macro(func, ret_t)
-#define PyAutoFunc_Register_Void_Args0(func, ret_t) PyAutoFunc_Register_Void_Args0_Macro(func, ret_t)
-#define PyAutoFunc_Register_Args1(func, ret_t, arg0_t) PyAutoFunc_Register_Args1_Macro(func, ret_t, arg0_t) 
-#define PyAutoFunc_Register_Void_Args1(func, ret_t, arg0_t) PyAutoFunc_Register_Void_Args1_Macro(func, ret_t, arg0_t)
-#define PyAutoFunc_Register_Args2(func, ret_t, arg0_t, arg1_t) PyAutoFunc_Register_Args2_Macro(func, ret_t, arg0_t, arg1_t)
-#define PyAutoFunc_Register_Void_Args2(func, ret_t, arg0_t, arg1_t) PyAutoFunc_Register_Void_Args2_Macro(func, ret_t, arg0_t, arg1_t)
-#define PyAutoFunc_Register_Args3(func, ret_t, arg0_t, arg1_t, arg2_t) PyAutoFunc_Register_Args3_Macro(func, ret_t, arg0_t, arg1_t, arg2_t)
-#define PyAutoFunc_Register_Void_Args3(func, ret_t, arg0_t, arg1_t, arg2_t) PyAutoFunc_Register_Void_Args3_Macro(func, ret_t, arg0_t, arg1_t, arg2_t)
-#define PyAutoFunc_Register_Args4(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t) PyAutoFunc_Register_Args4_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t)
-#define PyAutoFunc_Register_Void_Args4(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t) PyAutoFunc_Register_Void_Args4_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t)
-#define PyAutoFunc_Register_Args5(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) PyAutoFunc_Register_Args5_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t)
-#define PyAutoFunc_Register_Void_Args5(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) PyAutoFunc_Register_Void_Args5_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t)
+#define PyAutoFunction_RegisterArgs0(func, ret_t) PyAutoFunction_RegisterArgs0_Macro(func, ret_t)
+#define PyAutoFunction_RegisterVoidArgs0(func, ret_t) PyAutoFunction_RegisterVoidArgs0_Macro(func, ret_t)
+#define PyAutoFunction_RegisterArgs1(func, ret_t, arg0_t) PyAutoFunction_RegisterArgs1_Macro(func, ret_t, arg0_t) 
+#define PyAutoFunction_RegisterVoidArgs1(func, ret_t, arg0_t) PyAutoFunction_RegisterVoidArgs1_Macro(func, ret_t, arg0_t)
+#define PyAutoFunction_RegisterArgs2(func, ret_t, arg0_t, arg1_t) PyAutoFunction_RegisterArgs2_Macro(func, ret_t, arg0_t, arg1_t)
+#define PyAutoFunction_RegisterVoidArgs2(func, ret_t, arg0_t, arg1_t) PyAutoFunction_RegisterVoidArgs2_Macro(func, ret_t, arg0_t, arg1_t)
+#define PyAutoFunction_RegisterArgs3(func, ret_t, arg0_t, arg1_t, arg2_t) PyAutoFunction_RegisterArgs3_Macro(func, ret_t, arg0_t, arg1_t, arg2_t)
+#define PyAutoFunction_RegisterVoidArgs3(func, ret_t, arg0_t, arg1_t, arg2_t) PyAutoFunction_RegisterVoidArgs3_Macro(func, ret_t, arg0_t, arg1_t, arg2_t)
+#define PyAutoFunction_RegisterArgs4(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t) PyAutoFunction_RegisterArgs4_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t)
+#define PyAutoFunction_RegisterVoidArgs4(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t) PyAutoFunction_RegisterVoidArgs4_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t)
+#define PyAutoFunction_RegisterArgs5(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) PyAutoFunction_RegisterArgs5_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t)
+#define PyAutoFunction_RegisterVoidArgs5(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) PyAutoFunction_RegisterVoidArgs5_Macro(func, ret_t, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t)
 
 typedef void (*PyAutoCFunc)(void*,void*);
 
-void PyAutoFunc_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType ret_tid, int num_args, ...);
+void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType ret_tid, int num_args, ...);
 
 #endif

@@ -29,7 +29,7 @@ static int total_arg_size(func_entry fe) {
   
 }
 
-static PyObject* PyAutoFunc_CallEntry(func_entry fe, PyObject* args) {
+static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
 
   void* ret_data = malloc(PyAutoType_Size(fe.type_id));
   void* arg_data = malloc(total_arg_size(fe));
@@ -51,20 +51,20 @@ static PyObject* PyAutoFunc_CallEntry(func_entry fe, PyObject* args) {
 
 }
 
-PyObject* PyAutoFunc_Call(void* c_func, PyObject* args) {
+PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
   
   for(int i = 0; i < num_func_entries; i++) {
-    if (func_entries[i].func == c_func) return PyAutoFunc_CallEntry(func_entries[i], args);
+    if (func_entries[i].func == c_func) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
   PyAutoError("Function at %p is not registered!", c_func);
   
 }
 
-PyObject* PyAutoFunc_CallByName(char* c_func_name, PyObject* args) {
+PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
 
   for(int i = 0; i < num_func_entries; i++) {
-    if (strcmp(func_entries[i].name, c_func_name) == 0) return PyAutoFunc_CallEntry(func_entries[i], args);
+    if (strcmp(func_entries[i].name, c_func_name) == 0) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
   PyAutoError("Function %s is not registered!", c_func_name);
@@ -72,7 +72,7 @@ PyObject* PyAutoFunc_CallByName(char* c_func_name, PyObject* args) {
 
 }
 
-void PyAutoFunc_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType type_id, int num_args, ...) {
+void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType type_id, int num_args, ...) {
   
   if (num_args >= MAX_ARG_NUM) {
     PyAutoError("Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);

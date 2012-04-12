@@ -27,11 +27,10 @@ int main(int argc, char **argv) {
   Py_Initialize();
 
   PyAutoConvert_RegisterPrimatives();
-  
-  PyAutoFunc_Register_Args2(add_numbers, float, int, float);
+  PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
 
   PyObject* args = Py_BuildValue("(if)", 5, 6.13);
-  PyObject* result = PyAutoFunc_Call(add_numbers, args);
+  PyObject* result = PyAutoFunction_Call(add_numbers, args);
   PyObject_Print(result, stdout, 0);
   
   Py_DECREF(result);
@@ -183,8 +182,8 @@ Issues
 * The function registration macros are a little verbose though this is unavoidable. Always remember that the argument count must be specified in the name and also if the function returns void.
 
 ```c
-PyAutoFunc_Register_Args2(add_numbers, float, int, float);
-PyAutoFunc_Register_Void_Args3(message_ntimes, void, char*, int);
+PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
+PyAutoFunction_RegisterVoidArgs3(message_ntimes, void, char*, int);
 ```
 	
 * There is hard coded limit to many aspects such as number of conversion functions which can be registered or maximum number of arguments in registered functions. This is something I plan to change in consecutive versions but for now the limits can be increased with some simple edits to the source and recompiling.

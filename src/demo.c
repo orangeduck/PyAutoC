@@ -29,16 +29,16 @@ int main() {
   Py_Initialize();
   
   PyAutoConvert_RegisterPrimatives();
-  PyAutoFunc_Register_Args2(add_numbers, float, int, float);
-  PyAutoFunc_Register_Void_Args1(hello_world, void, char*);
+  PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
+  PyAutoFunction_RegisterVoidArgs1(hello_world, void, char*);
   
   PyObject* args0 = Py_BuildValue("(if)", 5, 6.13);
-  PyObject* result0 = PyAutoFunc_Call(add_numbers, args0);
+  PyObject* result0 = PyAutoFunction_Call(add_numbers, args0);
   PyObject_PrintStdout(result0);
   Py_DECREF(result0); Py_DECREF(args0);
   
   PyObject* args1 = Py_BuildValue("(s)", "Daniel");
-  PyObject* result1 = PyAutoFunc_Call(hello_world, args1);
+  PyObject* result1 = PyAutoFunction_Call(hello_world, args1);
   PyObject_PrintStdout(result1);
   Py_DECREF(result1); Py_DECREF(args1);
   
