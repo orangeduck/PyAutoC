@@ -5,7 +5,7 @@ PyAutoC
 Introduction
 ------------
 
-PyAutoC automatically wraps native C functions and structs so that they can be called from the Python/C API.
+PyAutoC automatically wraps C functions and structs at runtime so that they can be called from the Python/C API.
 
 * Don't fancy the idea of hand wrapping every function and struct in your codebase?
 * Don't like the look of the monster that is SWIG?
@@ -82,6 +82,37 @@ int main(int argc, char **argv) {
 	
 Structs work similarly to their functional counterparts. They can be accessed at runtime and do automatic conversion of types. As you can see by the "Py\_DECREF" function all PyAutoC functions which return a PyObject\* return a new reference.
 
+New Argument Types
+------------------
+
+To call functions or access struct members which have non-primitive types it is possible to register your own conversion functions.
+
+```c
+typedef struct {
+	int x, y;
+} pair;
+
+static PyObject* convert_from_pair(void* data) {
+	pair p = *(pair*)data;
+	return Py_BuildValue("(ii)", p.x, p.y);
+}
+
+void convert_to_pair(PyObject* pyobj, void* out) {
+	pair* p = (pair*)out;
+	p->x = PyInt_AsLong(PyTuple_GetItem(pyobj, 0));
+	p->y = PyInt_AsLong(PyTuple_GetItem(pyobj, 1));
+}
+
+PyAutoConvert_Register(pair, convert_from_pair, convert_to_pair);
+```
+
+Now it is possible to call any functions with 'pair' as an argument or return type and PyAutoC will handle any conversions automatically. You can also use the registered functions directly in your code by using PyAutoConvert.
+
+```c
+pair p = {1, 2};
+PyObject* pypair = PyAutoConvert_From(pair, &p);  
+```
+
 Extended Usage 1
 ----------------
 
@@ -93,6 +124,10 @@ You can use PyAutoC to very quickly and easily create Python C modules for a bun
 
 static float add_numbers(int first, float second) {
 	return first + second;
+}
+
+static void hello_world(char* person) {
+	printf("Hello %s!", person);
 }
 
 static PyObject* call(PyObject* unused, PyObject* args) {
@@ -113,7 +148,8 @@ PyMODINIT_FUNC initpyautoc_demo(void) {
     Py_AtExit(PyAutoC_Finalize);
   
 	PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);	
-	
+	PyAutoFunction_RegisterVoidArgs1(hello_world, void, char*);	
+
     Py_InitModule("pyautoc_demo", method_table);
 }
 ```
@@ -122,7 +158,8 @@ Then in Python...
 
 ```python
 import pyautoc_demo
-print pyautoc_demo.call("add_numbers", 5, 6.13);
+result = pyautoc_demo.call("add_numbers", 5, 6.13);
+pyautoc_demo.call("hello_world", "Daniel");
 ```
 
 Once you have this basic interface it is easy to intergrate more complicated and transparent APIs with some more complicated Python. For Example...
@@ -188,42 +225,11 @@ A lot less work than writing a bunch of getters and setters!
 
 The "get\_instance\_ptr" function is left for the user to implement and there are lots of options. The idea is that somehow the python instance should tell you how to get a pointer to the actual struct instance in C which it represents. One option is to store C pointers in the python instance using something like "PyCObject\_FromVoidPtr". An alternative I like is to just store a string in the python instance which uniquely identifies it. Once you have this, in C it is possible to just look this string up in a dictionary or similar to find the actual pointer.
 
-The above technique can also be easily extended so that as well as members, the class is able to look up and execute methods too!
+For fun why not try also overriding __init__ and __del__ to call some C functions which allocate and decallocate the structure you are emulating. It is also easy to extend the above technique so that, as well as members, the class is able to look up and execute methods!
 
-If you use "PyAutoStruct\_GetMember\_TypeId" or "PyAutoStruct\_SetMember\_TypeId" you can even extend the above to work for arbritary structs/classes. For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into "PyAutoType\_Register".
+The true power of PyAutoC comes if you look a level deeper. If you use "PyAutoStruct\_GetMember\_TypeId" or "PyAutoStruct\_SetMember\_TypeId" you can even extend the above code to work for arbritary structs/classes which developers can add to.
 
-The "PyAutoType\_Register" function is a simple function which gives a unique identifier to each new string it encounters. Run time type-ids are generated for types in this way - the macro preprocessor just turns the token into a string and feeds it into this function. This means that if you give it a string of a previously registered data type it will return a matching Id. One trick I like it to use is to feed into it the ".\_\_class\_\_.\_\_name\_\_" property of a python instance. This means that I can create a new python class with overwritten "\_\_getattr\_\_" and "\_\_setattr\_\_" it will automatically act like the corrisponding C struct with the same name.
-
-New Argument Types
-------------------
-
-To call functions or access struct members which have non-primitive types it is possible to register your own conversion functions.
-
-```c
-typedef struct {
-	int x, y;
-} pair;
-
-static PyObject* convert_from_pair(void* data) {
-	pair p = *(pair*)data;
-	return Py_BuildValue("(ii)", p.x, p.y);
-}
-
-void convert_to_pair(PyObject* pyobj, void* out) {
-	pair* p = (pair*)out;
-	p->x = PyInt_AsLong(PyTuple_GetItem(pyobj, 0));
-	p->y = PyInt_AsLong(PyTuple_GetItem(pyobj, 1));
-}
-
-PyAutoConvert_Register(pair, convert_from_pair, convert_to_pair);
-```
-
-Now it is possible to call any functions with 'pair' as an argument or return type and PyAutoC will handle any conversions automatically. You can also use the registered functions directly in your code by using PyAutoConvert.
-
-```c
-pair p = {1, 2};
-PyObject* pypair = PyAutoConvert_From(pair, &p);  
-```
+For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into "PyAutoType\_Register". The "PyAutoType\_Register" function is a simple function which gives a unique identifier to each new string it encounters. Run time type-ids are generated for types in this way - the macro preprocessor just turns the token into a string and feeds it into this function. This means that if you give it a string of a previously registered data type it will return a matching Id. One trick I like it to use is to feed into it the ".\_\_class\_\_.\_\_name\_\_" property of a python instance. This means that I can create a new python class with overwritten "\_\_getattr\_\_" and "\_\_setattr\_\_" it will automatically act like the corrisponding C struct with the same name - providing it has been registered by some developer.
 	
 Warnings/Issues
 ---------------
@@ -239,5 +245,5 @@ PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
 PyAutoFunction_RegisterVoidArgs3(add_numbers_message, void, char*, int, float);
 ```
 	
-* Using PyAutoC for functions creates a small memory and performance overhead. This is because it duplicates much of the process involved in managing the stack such as copying stack data. Because most of the logic happens at run-time it also uses a lot of function pointers. These cannot be optimised and inlined very easily so processes such as converting lots of Python data to C data can be slower than if the process is declared statically. Still, if you are wrapping with a scripting language like python then perhaps it is less of a concern.
+* Using PyAutoC for functions creates a small memory and performance overhead. This is because it duplicates much of the process involved in managing the stack such as copying stack data. Because most of the logic happens at run-time it also uses a lot of function pointers. These cannot be optimised and inlined very easily so processes such as converting lots of Python data to C data can be slower than if the process is declared statically. Still, the overhead is fairly minimal and if you are wrapping with a scripting language like python then perhaps it is less of a concern.
 

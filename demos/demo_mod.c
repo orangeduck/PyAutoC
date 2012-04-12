@@ -5,6 +5,10 @@ static float add_numbers(int first, float second) {
   return first + second;
 }
 
+static void hello_world(char* person) {
+	printf("Hello %s!", person);
+}
+
 static PyObject* call(PyObject* unused, PyObject* args) {
 	PyObject* func = PyTuple_GetItem(args, 0);
 	PyObject* fargs = PyTuple_GetSlice(args, 1, PyTuple_Size(args));
@@ -23,6 +27,7 @@ PyMODINIT_FUNC initpyautoc_demo(void) {
   Py_AtExit(PyAutoC_Finalize);
   
 	PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);	
+	PyAutoFunction_RegisterVoidArgs1(hello_world, void, char*);	
 	
   Py_InitModule("pyautoc_demo", method_table);
 }
