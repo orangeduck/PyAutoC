@@ -5,11 +5,9 @@ PyAutoC
 Introduction
 ------------
 
-PyAutoC automatically wraps C functions and structs so that they can be called effortlessly from the Python/C API.
+PyAutoC automatically wraps native C functions and structs so that they can be called from the Python/C API. PyAutoC might help you if...
 
-PyAutoC is for you if:
-
-* You have a large C codebase and don't feel like writing wrappers around every function.
+* You have a C codebase and don't want to write wrappers around every function and struct.
 * You have a Python-C Interop which you want to be easily extendable by others at run-time.
 
 
@@ -33,9 +31,11 @@ int main(int argc, char **argv) {
   PyAutoFunc_Register_Args2(add_numbers, float, int, float);
 
   PyObject* args = Py_BuildValue("(if)", 5, 6.13);
-  PyObject* result = PyAutoFunc_Call(add_numbers, args0);
+  PyObject* result = PyAutoFunc_Call(add_numbers, args);
+  PyObject_Print(result, stdout, 0);
   
-  Py_DECREF(result0); Py_DECREF(args0);
+  Py_DECREF(result);
+  Py_DECREF(args);
   Py_Finalize();
   
   return 0;
@@ -50,6 +50,9 @@ Basic Struct Usage
 ------------------ 
 
 ```c
+#include "Python.h"
+#include "PyAutoC.h"
+
 typedef struct {
   float x, y, z;
 } vector3;
@@ -67,68 +70,79 @@ int main(int argc, char **argv) {
 
 	vector3 position = {1.0f, 2.11f, 3.16f};
 
-	PyObject* result = PyAutoStruct_Get(vector3, &position, y);
-	Py_DECREF(result);
+	PyObject* y = PyAutoStruct_Get(vector3, &position, y);
+	PyObject_Print(y, stdout, 0);
+	
+	Py_DECREF(y);
 	Py_Finalize();
 	
 	return 0;
 }
 ```
 	
-Structs work similarly to their functional counterparts. As with functions, they can be accessed at run-time and do automatic conversion of types. This access can come either in the form of a reference to a member (function pointer for functions) or as a string (name of the member or function). This makes them a powerful tool which can be used dynamically at run time.
+Structs work similarly to their functional counterparts. They can be accessed at run-time and do automatic conversion of types.
 
 	
 Extended Usage
 --------------
 
-Because PyAutoC lets you register new Python accessible functions at run time it is perfect for automatically wrapping Python Classes. For example by overriding "\_\_getattr\_\_" and "\_\_setattr\_\_" of some Python class we can make a Python object that behaves as if it were a C struct.
+Because PyAutoC lets you register new Python accessible functions at run time it is perfect for automatically wrapping Python Classes. For example by overriding "\_\_getattr\_\_" and "\_\_setattr\_\_" of a class we can make a Python object that behaves as if it were a C struct.
 
 ```python
-import pyautoc_demo
+import my_class
 
-class cstruct(object):
-	def __getattr__(self, attr): pyautoc_demo.get_attr(self, attr)
-	def __setattr__(self, attr, val): pyautoc_demo.set_attr(self, attr, val)
+class my_python_class(object):
+	def __getattr__(self, attr): my_class.get_attr(self, attr)
+	def __setattr__(self, attr, val): my_class.set_attr(self, attr, val)
 ```
 		
 Then in the C API you can write something that looks like this.
     
 ```c
-static PyObject* get_attr(PyObject* unused, PyObject* args) {
+
+typedef struct {
+  char* name;
+  float value;
+} my_class;
+
+static PyObject* my_class_get_attr(PyObject* unused, PyObject* args) {
 	PyObject* self = PyTuple_GetItem(args, 0);
 	PyObject* attr = PyTuple_GetItem(args, 1);
 	
 	void* cstruct = somehow_get_ptr(self);
-	PyAutoType type = somehow_get_type(self);
-	return PyAutoStruct_GetByName_TypeId(type, cstruct, PyString_AsString(attr));
+	return PyAutoStruct_GetMember(my_class, cstruct, PyString_AsString(attr));
 }
 
-static PyObject* set_attr(PyObject* unused, PyObject* args) {
+static PyObject* my_class_set_attr(PyObject* unused, PyObject* args) {
 	PyObject* self = PyTuple_GetItem(args, 0);
 	PyObject* attr = PyTuple_GetItem(args, 1);
 	PyObject* val = PyTuple_GetItem(args, 2);
 	
 	void* cstruct = somehow_get_ptr(self);
-	PyAutoType type = somehow_get_type(self);
-	PyAutoStruct_SetByName_TypeId(type, cstruct, PyString_AsString(attr), val);
+	PyAutoStruct_SetMember(my_class, cstruct, PyString_AsString(attr), val);
 	Py_RETURN_NONE;
 }
 
 static PyMethodDef method_table[] = {
-	{"get_attr", get_attr, METH_VARARGS, ""},
-	{"set_attr", set_attr, METH_VARARGS, ""},
+	{"get_attr", my_class_get_attr, METH_VARARGS, ""},
+	{"set_attr", my_class_set_attr, METH_VARARGS, ""},
 	{NULL, NULL, 0, NULL},
 };
 
-Py_InitModule("pyautoc_demo", method_table);
+PyAutoStruct_Register(my_class);
+PyAutoStruct_RegisterMember(my_class, name, char*);
+PyAutoStruct_RegisterMember(my_class, value, float);
+
+Py_InitModule("my_class", method_table);
 ```
 
-For the "somehow\_get\_type" function you can often store some information in the Python Object Instance which distinguishes itself. A trick I like to use is to look at the ".\_\_class\_\_.\_\_name\_\_" property of the instance and feed it into the function "PyAutoType\_Register". This spits out a PyAutoType and if the input string matches that of registered struct then it will return the same PyAutoType!
+The above python object will then act as if it were a "my\_class" struct and on attribute accesses to "name" or "value" will return appropriate python objects. A lot less work than writing a bunch of getters and setters!
 
-For "somehow\_get\_ptr" there are lots of options. It is possible to store C pointers using something like "PyCObject\_FromVoidPtr", but I like to just store a string which identifies the instance and then look this string up in C using a dictionary or similar to find the actual pointer.
+For the "somehow\_get\_ptr" function there are lots of options, but the idea is that somehow the python instance should tell you how to get a pointer to the actual struct instance in C. One option is to store C pointers in the python instance using something like "PyCObject\_FromVoidPtr". An alternative I like to just store a string in the python instance which identifies it and then in C I can look this string up in a dictionary or similar to find the actual pointer.
 
 The above technique can also be easily extended so that as well as members, the class is able to look up methods too!
 
+If you use "PyAutoStruct\_SetMember\_TypeId" you can even extend the above to work for arbritary structs/classes. For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into "PyAutoType\_Register". The "PyAutoType\_Register" function is a simple function which gives a unique identifier to each new string it encounters. This means that if you give it a string of a previously registered data type it will return a matching Id. One trick I like it to use the ".\_\_class\_\_.\_\_name\_\_" property of a python instance to find the type. This means that I can create a python class and it will automatically act like the corrisponding C struct providing it has the same name.
 
 New Argument Types
 ------------------
@@ -160,19 +174,17 @@ Now it is possible to call any functions with 'pair' as an argument or return ty
 pair p = {1, 2};
 PyObject* pypair = PyAutoConvert_From(pair, &p);  
 ```
-
-
 	
 Issues
 ------
 
-Using PyAutoC creates a small memory and performance overhead. This is because it duplicates much of the process involved in managing the stack such as copying stack data. It also uses function pointers which cannot be inlined, so sometimes converting a lot of Python data to C data can be slower than if the process is declared statically.
+* Using PyAutoC for functions creates a small memory and performance overhead. This is because it duplicates much of the process involved in managing the stack such as copying stack data. Because most of the logic happens at run-time it also uses a lot of function pointers. These cannot be inlined and so processes such as converting much Python data to C data can be slower than if the process is declared statically.
 
-Secondly the function registration macros are a little verbose. The argument count must be specified in the name and also if the function returns void.
+* The function registration macros are a little verbose though this is unavoidable. Always remember that the argument count must be specified in the name and also if the function returns void.
 
 ```c
 PyAutoFunc_Register_Args2(add_numbers, float, int, float);
 PyAutoFunc_Register_Void_Args3(message_ntimes, void, char*, int);
 ```
 	
-Finally there is hard coded limit to many aspects such as number of conversion functions which can be registered or maximum number of arguments in registered functions. This can be increased with some simple edits to the source and recompiling, but it increases memory overheads.
+* There is hard coded limit to many aspects such as number of conversion functions which can be registered or maximum number of arguments in registered functions. This is something I plan to change in consecutive versions but for now it can be increased with some simple edits to the source and recompiling.

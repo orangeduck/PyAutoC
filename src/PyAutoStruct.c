@@ -21,20 +21,7 @@ typedef struct {
 struct_entry struct_entries[MAX_STRUCT_ENTRIES];
 int num_struct_entries = 0;
 
-PyObject* PyAutoStruct_GetByOffset_TypeId(PyAutoType type, void* cstruct, PyAutoType member_type, int offset) {
-
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
-    struct_entry se = struct_entries[i];
-    return PyAutoConvert_From_TypeId(member_type, cstruct+offset);
-  }
-  }
-  
-  PyAutoError("Struct '%s' not registered!", PyAutoType_Name(type));
-
-}
-
-PyObject* PyAutoStruct_GetByName_TypeId(PyAutoType type, void* cstruct, char* member) {
+PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* member) {
   
   for(int i = 0; i < num_struct_entries; i++) {
   if (type == struct_entries[i].type_id) {
@@ -57,7 +44,7 @@ PyObject* PyAutoStruct_GetByName_TypeId(PyAutoType type, void* cstruct, char* me
   
 }
 
-void PyAutoStruct_SetByName_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
+void PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
 
   for(int i = 0; i < num_struct_entries; i++) {
   if (type == struct_entries[i].type_id) {
