@@ -10,15 +10,28 @@ PLATFORM = $(shell uname)
 ifeq ($(findstring Linux,$(PLATFORM)),Linux)
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g -fPIC
 	LFLAGS= -shared
+	DISTUTIL=
 endif
 
 ifeq ($(findstring MINGW,$(PLATFORM)),MINGW)
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g
 	LFLAGS= -g -L./Python27/libs -lpython27 -lmingw32
+	DISTUTIL= -c mingw32
 endif
 
-demo: $(OBJ_FILES)
-	$(CC) $(OBJ_FILES) $(LFLAGS) -o $@
+all: demo_func demo_struct demo_mod demo_embed
+
+demo_func: $(OBJ_FILES)
+	$(CC) demos/demo_func.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@
+	
+demo_struct: $(OBJ_FILES)
+	$(CC) demos/demo_struct.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@
+	
+demo_mod: $(OBJ_FILES)
+	python demos/setup.py build $(DISTUTIL)
+	
+demo_embed: $(OBJ_FILES)
+	$(CC) demos/demo_embed.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@
 	
 obj/%.o: src/%.c | obj
 	$(CC) $< -c $(CFLAGS) -o $@

@@ -1,3 +1,4 @@
 *~
-*.o
-demo.exe
+build*
+*.exe
+obj*
