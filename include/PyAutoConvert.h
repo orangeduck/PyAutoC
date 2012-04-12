@@ -4,6 +4,9 @@
 #include "Python.h"
 #include "PyAutoType.h"
 
+void PyAutoConvert_Initialize();
+void PyAutoConvert_Finalize();
+
 #define PyAutoConvert_From(type, c_val) PyAutoConvert_From_TypeId(PyTypeId(type), c_val)
 PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val);
 
@@ -21,8 +24,6 @@ void PyAutoConvert_RegisterFrom_TypeId(PyAutoType type_id, PyAutoConvert_FromFun
 
 #define PyAutoConvert_RegisterTo(type, func) PyAutoConvert_RegisterTo_TypeId(PyTypeId(type), func)
 void PyAutoConvert_RegisterTo_TypeId(PyAutoType type_id, PyAutoConvert_ToFunc func);
-
-void PyAutoConvert_RegisterPrimatives();
 
 PyObject* PyAutoConvert_PrimFromChar(void* data);
 void PyAutoConvert_PrimToChar(PyObject* pyobj, void* out);
@@ -55,8 +56,8 @@ void PyAutoConvert_PrimToLongDouble(PyObject* pyobj, void* out);
 
 PyObject* PyAutoConvert_PrimFromCharPtr(void* data);
 void PyAutoConvert_PrimToCharPtr(PyObject* pyobj, void* out);
-PyObject* PyAutoConvert_PrimConstFromCharPtr(void* data);
-void PyAutoConvert_PrimConstToCharPtr(PyObject* pyobj, void* out);
+PyObject* PyAutoConvert_PrimFromConstCharPtr(void* data);
+void PyAutoConvert_PrimToConstCharPtr(PyObject* pyobj, void* out);
 
 PyObject* PyAutoConvert_PrimFromVoid(void* data);
 

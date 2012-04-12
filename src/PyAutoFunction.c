@@ -3,12 +3,10 @@
 #include "PyAutoConvert.h"
 #include "PyAutoFunction.h"
 
-#define MAX_NAME_LEN 256
 #define MAX_ARG_NUM 5
-#define MAX_FUNC_ENTRIES 512
 
 typedef struct {
-  char name[MAX_NAME_LEN];
+  char* name;
   PyAutoCFunc ac_func;
   void* func;
   PyAutoType type_id;
@@ -16,8 +14,22 @@ typedef struct {
   PyAutoType arg_types[MAX_ARG_NUM];
 } func_entry;
 
-static func_entry func_entries[MAX_FUNC_ENTRIES];
+static func_entry* func_entries;
 static int num_func_entries = 0;
+static int num_reserved_func_entries = 512;
+
+void PyAutoFunction_Initialize() {
+  func_entries = malloc(sizeof(func_entry) * num_reserved_func_entries);
+}
+
+void PyAutoFunction_Finalize() {
+
+  for(int i = 0; i < num_func_entries; i++) {
+    free(func_entries[i].name);
+  }
+
+  free(func_entries);
+}
 
 static int total_arg_size(func_entry fe) {
   
@@ -78,11 +90,13 @@ void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name,
     PyAutoError("Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
   }
   
-  if (strlen(name) >= MAX_NAME_LEN) {
-    PyAutoError("Function name '%s' is longer than supported %i characters", name, MAX_NAME_LEN);
+  if (num_func_entries >= num_reserved_func_entries) {
+    num_reserved_func_entries += 512;
+    func_entries = realloc(func_entries, sizeof(func_entry) * num_reserved_func_entries);
   }
   
   func_entry fe;
+  fe.name = malloc(strlen(name) + 1);
   strcpy(fe.name, name);
   fe.ac_func = ac_func;
   fe.func = func;

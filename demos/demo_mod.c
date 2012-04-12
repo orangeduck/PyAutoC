@@ -19,8 +19,8 @@ static PyMethodDef method_table[] = {
 };
 
 PyMODINIT_FUNC initpyautoc_demo(void) {
-
-	PyAutoConvert_RegisterPrimatives();
+	PyAutoC_Initialize();
+  Py_AtExit(PyAutoC_Finalize);
   
 	PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);	
 	

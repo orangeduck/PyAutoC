@@ -4,6 +4,9 @@
 #include "Python.h"
 #include "PyAutoType.h"
 
+void PyAutoStruct_Initialize();
+void PyAutoStruct_Finalize();
+
 #define PyAutoStruct_Get(type, cstruct, member) PyAutoStruct_GetMember_TypeId(PyTypeId(type), cstruct, #member)
 #define PyAutoStruct_GetMember(type, cstruct, member) PyAutoStruct_GetMember_TypeId(PyTypeId(type), cstruct, member)
 PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* member_name);

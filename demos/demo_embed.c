@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
   test_my_class.value = 1.2f;
   
   Py_Initialize();
-
-  PyAutoConvert_RegisterPrimatives();
+  PyAutoC_Initialize();
+  
   PyAutoStruct_Register(my_class);
   PyAutoStruct_RegisterMember(my_class, name, char*);
   PyAutoStruct_RegisterMember(my_class, value, float);
@@ -59,6 +59,7 @@ int main(int argc, char **argv) {
   "print my_class_inst.name\n"
   "print my_class_inst.value\n");
   
+  PyAutoC_Finalize();
   Py_Finalize();
   
   return 0;

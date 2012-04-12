@@ -2,39 +2,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "PyAutoError.h"
 #include "PyAutoType.h"
 
-#define MAX_TYPE_LEN 512
-#define MAX_NUM_TYPES 1024
-
-typedef char type_string[MAX_TYPE_LEN];
+typedef char* type_name;
 typedef int type_size;
 
-type_string type_names[MAX_NUM_TYPES];
-type_size type_sizes[MAX_NUM_TYPES];
+static type_name* type_names;
+static type_size* type_sizes;
 
-int type_index = 0;
+static int num_types = 0;
+static int num_reserved_types = 512;
+
+void PyAutoType_Initialize() {
+  
+  type_names = malloc(sizeof(type_name) * num_reserved_types);
+  type_sizes = malloc(sizeof(type_size) * num_reserved_types);
+  
+}
+
+void PyAutoType_Finalize() {
+  
+  for(int i = 0; i < num_types; i++) {
+    free(type_names[i]);
+  }
+  
+  free(type_names);
+  free(type_sizes);
+  
+}
 
 PyAutoType PyAutoType_Register(const char* type, int size) {
   
-  for(int i = 0; i < type_index; i++) {
+  for(int i = 0; i < num_types; i++) {
     if (strcmp(type, type_names[i]) == 0) return i;
   }
   
-  if (strlen(type) >= MAX_TYPE_LEN) {
-    PyAutoError("Type name '%s' longer than maximum %i characters.", type, MAX_TYPE_LEN);
+  if (num_types >= num_reserved_types) {
+    num_reserved_types += 512;
+    type_names = realloc(type_names, sizeof(type_name) * num_reserved_types);
+    type_sizes = realloc(type_sizes, sizeof(type_size) * num_reserved_types);
   }
   
-  if (type_index >= MAX_NUM_TYPES) {
-    PyAutoError("Reached maximum of %i registered types!", MAX_NUM_TYPES);
-  }
+  type_names[num_types] = malloc(strlen(type)+1);
+  strcpy(type_names[num_types], type);
+  type_sizes[num_types] = size;
+  num_types++;
   
-  strcpy(type_names[type_index], type);
-  type_sizes[type_index] = size;
-  type_index++;
-  
-  return type_index-1;
+  return num_types-1;
 }
 
 const char* PyAutoType_Name(PyAutoType id) {

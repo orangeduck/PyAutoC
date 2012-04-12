@@ -1,20 +1,56 @@
 #include "PyAutoError.h"
 #include "PyAutoConvert.h"
 
-#define MAX_CONVERT_FUNCS 512
+static PyAutoConvert_FromFunc* convert_from_funcs;
+static PyAutoConvert_ToFunc* convert_to_funcs;
 
-static PyAutoConvert_FromFunc convert_from_funcs[MAX_CONVERT_FUNCS];
-static PyAutoConvert_ToFunc convert_to_funcs[MAX_CONVERT_FUNCS];
-
-static int convert_from_type_ids[MAX_CONVERT_FUNCS];
-static int convert_to_type_ids[MAX_CONVERT_FUNCS];
+static PyAutoType* convert_from_type_ids;
+static PyAutoType* convert_to_type_ids;
 
 static int num_convert_from_funcs = 0;
+static int num_reserved_convert_from_funcs = 512;
 static int num_convert_to_funcs = 0;
+static int num_reserved_convert_to_funcs = 512;
+
+void PyAutoConvert_Initialize() {
+  
+  convert_from_funcs = malloc(sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
+  convert_to_funcs = malloc(sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
+  convert_from_type_ids = malloc(sizeof(PyAutoType) * num_reserved_convert_from_funcs);
+  convert_to_type_ids = malloc(sizeof(PyAutoType) * num_reserved_convert_to_funcs);
+  
+  PyAutoConvert_Register(char, PyAutoConvert_PrimFromChar, PyAutoConvert_PrimToChar);
+  PyAutoConvert_Register(signed char, PyAutoConvert_PrimFromSignedChar, PyAutoConvert_PrimToSignedChar);
+  PyAutoConvert_Register(unsigned char, PyAutoConvert_PrimFromUnsignedChar, PyAutoConvert_PrimToUnsignedChar);
+  PyAutoConvert_Register(short, PyAutoConvert_PrimFromShort, PyAutoConvert_PrimToShort);
+  PyAutoConvert_Register(unsigned short, PyAutoConvert_PrimFromUnsignedShort, PyAutoConvert_PrimToUnsignedShort);
+  PyAutoConvert_Register(int, PyAutoConvert_PrimFromInt, PyAutoConvert_PrimToInt);
+  PyAutoConvert_Register(unsigned int, PyAutoConvert_PrimFromUnsignedInt, PyAutoConvert_PrimToUnsignedInt);
+  PyAutoConvert_Register(long, PyAutoConvert_PrimFromLong, PyAutoConvert_PrimToLong);
+  PyAutoConvert_Register(unsigned long, PyAutoConvert_PrimFromUnsignedLong, PyAutoConvert_PrimToUnsignedLong);
+  PyAutoConvert_Register(long long, PyAutoConvert_PrimFromLongLong, PyAutoConvert_PrimToLongLong);
+  PyAutoConvert_Register(unsigned long long, PyAutoConvert_PrimFromUnsignedLongLong, PyAutoConvert_PrimToUnsignedLongLong);
+  PyAutoConvert_Register(float, PyAutoConvert_PrimFromFloat, PyAutoConvert_PrimToFloat);
+  PyAutoConvert_Register(double, PyAutoConvert_PrimFromDouble, PyAutoConvert_PrimToDouble);
+  PyAutoConvert_Register(long double, PyAutoConvert_PrimFromLongDouble, PyAutoConvert_PrimToLongDouble);
+  
+  PyAutoConvert_Register(char*, PyAutoConvert_PrimFromCharPtr, PyAutoConvert_PrimToCharPtr);
+  PyAutoConvert_Register(const char*, PyAutoConvert_PrimFromConstCharPtr, PyAutoConvert_PrimToConstCharPtr);
+  
+  PyAutoConvert_RegisterFrom(void, PyAutoConvert_PrimFromVoid);
+  
+}
+
+void PyAutoConvert_Finalize() {
+  
+  free(convert_from_funcs);
+  free(convert_to_funcs);
+  
+}
 
 PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val) {
   
-  for(int i = 0; i < num_convert_from_funcs; i++) {
+  for(int i = num_convert_from_funcs-1; i >= 0; i--) {
     if (type_id == convert_from_type_ids[i]) {
       PyObject* ret = convert_from_funcs[i](c_val);
       if (PyErr_Occurred()) {
@@ -32,7 +68,7 @@ PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val) {
 
 void PyAutoConvert_To_TypeId(PyAutoType type_id, PyObject* py_val, void* c_out) {
 
-  for(int i = 0; i < num_convert_to_funcs; i++) {
+  for(int i = num_convert_to_funcs-1; i >= 0; i--) {
     if (type_id == convert_to_type_ids[i]) {
       convert_to_funcs[i](py_val, c_out);
       if (PyErr_Occurred()) {
@@ -50,11 +86,15 @@ void PyAutoConvert_To_TypeId(PyAutoType type_id, PyObject* py_val, void* c_out) 
 
 void PyAutoConvert_Register_TypeId(PyAutoType type_id, PyAutoConvert_FromFunc from_func, PyAutoConvert_ToFunc to_func) {
   
-  if (num_convert_from_funcs == MAX_CONVERT_FUNCS) {
-    PyAutoError("Maximum number of type conversion functions %i registered!", MAX_CONVERT_FUNCS);
+  if (num_convert_from_funcs >= num_reserved_convert_from_funcs) {
+    num_reserved_convert_from_funcs += 512;
+    convert_from_funcs = realloc(convert_from_funcs, sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
+    convert_from_type_ids = realloc(convert_from_type_ids, sizeof(PyAutoType) * num_reserved_convert_from_funcs);
   }
-  if (num_convert_to_funcs == MAX_CONVERT_FUNCS) {
-    PyAutoError("Maximum number of type conversion functions %i registered!", MAX_CONVERT_FUNCS);
+  if (num_convert_to_funcs >= num_reserved_convert_to_funcs) {
+    num_reserved_convert_to_funcs += 512;
+    convert_to_funcs = realloc(convert_to_funcs, sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
+    convert_to_type_ids = realloc(convert_to_type_ids, sizeof(PyAutoType) * num_reserved_convert_to_funcs);
   }
 
   convert_from_funcs[num_convert_from_funcs] = from_func;
@@ -69,8 +109,10 @@ void PyAutoConvert_Register_TypeId(PyAutoType type_id, PyAutoConvert_FromFunc fr
 
 void PyAutoConvert_RegisterFrom_TypeId(PyAutoType type_id, PyAutoConvert_FromFunc func) {
   
-  if (num_convert_from_funcs == MAX_CONVERT_FUNCS) {
-    PyAutoError("Maximum number of type conversion functions %i registered!", MAX_CONVERT_FUNCS);
+  if (num_convert_from_funcs >= num_reserved_convert_from_funcs) {
+    num_reserved_convert_from_funcs += 512;
+    convert_from_funcs = realloc(convert_from_funcs, sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
+    convert_from_type_ids = realloc(convert_from_type_ids, sizeof(PyAutoType) * num_reserved_convert_from_funcs);
   }
   
   convert_from_funcs[num_convert_from_funcs] = func;
@@ -81,8 +123,10 @@ void PyAutoConvert_RegisterFrom_TypeId(PyAutoType type_id, PyAutoConvert_FromFun
 
 void PyAutoConvert_RegisterTo_TypeId(PyAutoType type_id, PyAutoConvert_ToFunc func) {
   
-  if (num_convert_to_funcs == MAX_CONVERT_FUNCS) {
-    PyAutoError("Maximum number of type conversion functions %i registered!", MAX_CONVERT_FUNCS);
+  if (num_convert_to_funcs >= num_reserved_convert_to_funcs) {
+    num_reserved_convert_to_funcs += 512;
+    convert_to_funcs = realloc(convert_to_funcs, sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
+    convert_to_type_ids = realloc(convert_to_type_ids, sizeof(PyAutoType) * num_reserved_convert_to_funcs);
   }
   
   convert_to_funcs[num_convert_to_funcs] = func;
@@ -207,28 +251,4 @@ void PyAutoConvert_PrimToConstCharPtr(PyObject* pyobj, void* out) {
 
 PyObject* PyAutoConvert_PrimFromVoid(void* data) {
   Py_RETURN_NONE;
-}
-
-void PyAutoConvert_RegisterPrimatives() {
-  
-  PyAutoConvert_Register(char, PyAutoConvert_PrimFromChar, PyAutoConvert_PrimToChar);
-  PyAutoConvert_Register(signed char, PyAutoConvert_PrimFromSignedChar, PyAutoConvert_PrimToSignedChar);
-  PyAutoConvert_Register(unsigned char, PyAutoConvert_PrimFromUnsignedChar, PyAutoConvert_PrimToUnsignedChar);
-  PyAutoConvert_Register(short, PyAutoConvert_PrimFromShort, PyAutoConvert_PrimToShort);
-  PyAutoConvert_Register(unsigned short, PyAutoConvert_PrimFromUnsignedShort, PyAutoConvert_PrimToUnsignedShort);
-  PyAutoConvert_Register(int, PyAutoConvert_PrimFromInt, PyAutoConvert_PrimToInt);
-  PyAutoConvert_Register(unsigned int, PyAutoConvert_PrimFromUnsignedInt, PyAutoConvert_PrimToUnsignedInt);
-  PyAutoConvert_Register(long, PyAutoConvert_PrimFromLong, PyAutoConvert_PrimToLong);
-  PyAutoConvert_Register(unsigned long, PyAutoConvert_PrimFromUnsignedLong, PyAutoConvert_PrimToUnsignedLong);
-  PyAutoConvert_Register(long long, PyAutoConvert_PrimFromLongLong, PyAutoConvert_PrimToLongLong);
-  PyAutoConvert_Register(unsigned long long, PyAutoConvert_PrimFromUnsignedLongLong, PyAutoConvert_PrimToUnsignedLongLong);
-  PyAutoConvert_Register(float, PyAutoConvert_PrimFromFloat, PyAutoConvert_PrimToFloat);
-  PyAutoConvert_Register(double, PyAutoConvert_PrimFromDouble, PyAutoConvert_PrimToDouble);
-  PyAutoConvert_Register(long double, PyAutoConvert_PrimFromLongDouble, PyAutoConvert_PrimToLongDouble);
-  
-  PyAutoConvert_Register(char*, PyAutoConvert_PrimFromCharPtr, PyAutoConvert_PrimToCharPtr);
-  PyAutoConvert_Register(const char*, PyAutoConvert_PrimFromConstCharPtr, PyAutoConvert_PrimToConstCharPtr);
-  
-  PyAutoConvert_RegisterFrom(void, PyAutoConvert_PrimFromVoid);
-  
 }

@@ -8,8 +8,7 @@ typedef struct {
 int main(int argc, char **argv) {
 	
 	Py_Initialize();
-	
-	PyAutoConvert_RegisterPrimatives();
+	PyAutoC_Initialize();
 	
 	PyAutoStruct_Register(vector3);
 	PyAutoStruct_RegisterMember(vector3, x, float);
@@ -20,8 +19,9 @@ int main(int argc, char **argv) {
 
 	PyObject* y = PyAutoStruct_Get(vector3, &position, y);
 	//PyObject_Print(y, stdout, 0);
-	
 	Py_DECREF(y);
+  
+	PyAutoC_Finalize();
 	Py_Finalize();
 	
 	return 0;
