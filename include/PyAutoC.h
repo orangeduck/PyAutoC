@@ -1,0 +1,5 @@
+#include "PyAutoError.h"
+#include "PyAutoType.h"
+#include "PyAutoFunction.h"
+#include "PyAutoStruct.h"
+#include "PyAutoConvert.h"
