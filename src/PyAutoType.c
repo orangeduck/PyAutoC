@@ -13,14 +13,14 @@ static type_size* type_sizes;
 static int num_types = 0;
 static int num_reserved_types = 128;
 
-void PyAutoType_Initialize() {
+void PyAutoType_Initialize(void) {
   
   type_names = malloc(sizeof(type_name) * num_reserved_types);
   type_sizes = malloc(sizeof(type_size) * num_reserved_types);
   
 }
 
-void PyAutoType_Finalize() {
+void PyAutoType_Finalize(void) {
   
   for(int i = 0; i < num_types; i++) {
     free(type_names[i]);

@@ -4,8 +4,8 @@
 #include "Python.h"
 #include "PyAutoType.h"
 
-void PyAutoConvert_Initialize();
-void PyAutoConvert_Finalize();
+void PyAutoConvert_Initialize(void);
+void PyAutoConvert_Finalize(void);
 
 #define PyAutoConvert_From(type, c_val) PyAutoConvert_From_TypeId(PyTypeId(type), c_val)
 PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val);

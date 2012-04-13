@@ -17,11 +17,11 @@ static func_entry* func_entries;
 static int num_func_entries = 0;
 static int num_reserved_func_entries = 128;
 
-void PyAutoFunction_Initialize() {
+void PyAutoFunction_Initialize(void) {
   func_entries = malloc(sizeof(func_entry) * num_reserved_func_entries);
 }
 
-void PyAutoFunction_Finalize() {
+void PyAutoFunction_Finalize(void) {
 
   for(int i = 0; i < num_func_entries; i++) {
     free(func_entries[i].name);

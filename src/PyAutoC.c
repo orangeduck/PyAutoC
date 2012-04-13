@@ -1,6 +1,6 @@
 #include "PyAutoC.h"
 
-void PyAutoC_Initialize() {
+void PyAutoC_Initialize(void) {
   
   PyAutoType_Initialize();
   PyAutoConvert_Initialize();
@@ -9,7 +9,7 @@ void PyAutoC_Initialize() {
   
 }
 
-void PyAutoC_Finalize() {
+void PyAutoC_Finalize(void) {
   
   PyAutoStruct_Finalize();
   PyAutoFunction_Finalize();

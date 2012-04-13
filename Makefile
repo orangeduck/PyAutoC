@@ -1,19 +1,19 @@
 CC=gcc
 
-INCS= -I ./include -I./Python27/include
-
 C_FILES= $(wildcard src/*.c)
 OBJ_FILES= $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 PLATFORM = $(shell uname)
 
 ifeq ($(findstring Linux,$(PLATFORM)),Linux)
+	INCS= -I ./include -I/usr/include/python2.7
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g -fPIC
 	LFLAGS= -shared
 	DISTUTIL=
 endif
 
 ifeq ($(findstring MINGW,$(PLATFORM)),MINGW)
+	INCS= -I ./include -I./Python27/include
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g
 	LFLAGS= -g -L./Python27/libs -lpython27 -lmingw32
 	DISTUTIL= -c mingw32

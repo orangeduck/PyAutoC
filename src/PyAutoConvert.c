@@ -11,7 +11,7 @@ static int num_reserved_convert_from_funcs = 128;
 static int num_convert_to_funcs = 0;
 static int num_reserved_convert_to_funcs = 128;
 
-void PyAutoConvert_Initialize() {
+void PyAutoConvert_Initialize(void) {
   
   convert_from_funcs = malloc(sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
   convert_to_funcs = malloc(sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
@@ -40,7 +40,7 @@ void PyAutoConvert_Initialize() {
   
 }
 
-void PyAutoConvert_Finalize() {
+void PyAutoConvert_Finalize(void) {
   
   free(convert_from_funcs);
   free(convert_to_funcs);

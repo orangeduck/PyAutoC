@@ -6,7 +6,7 @@
 #include "PyAutoStruct.h"
 #include "PyAutoConvert.h"
 
-void PyAutoC_Initialize();
-void PyAutoC_Finalize();
+void PyAutoC_Initialize(void);
+void PyAutoC_Finalize(void);
 
 #endif

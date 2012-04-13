@@ -1,8 +1,8 @@
 #ifndef PyAutoType_h
 #define PyAutoType_h
 
-void PyAutoType_Initialize();
-void PyAutoType_Finalize();
+void PyAutoType_Initialize(void);
+void PyAutoType_Finalize(void);
 
 typedef int PyAutoType;
 

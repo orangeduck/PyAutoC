@@ -5,8 +5,8 @@
 #include "PyAutoType.h"
 #include "PyAutoFunctionMacros.h"
 
-void PyAutoFunction_Initialize();
-void PyAutoFunction_Finalize();
+void PyAutoFunction_Initialize(void);
+void PyAutoFunction_Finalize(void);
 
 PyObject* PyAutoFunction_Call(void* c_func, PyObject* args);
 PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args);
