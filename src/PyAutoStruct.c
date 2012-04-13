@@ -16,7 +16,7 @@ typedef struct {
 
 struct_entry* struct_entries;
 int num_struct_entries = 0;
-int num_reserved_struct_entries = 512;
+int num_reserved_struct_entries = 128;
 
 void PyAutoStruct_Initialize() {
   struct_entries = malloc(sizeof(struct_entry) * num_reserved_struct_entries);
@@ -49,14 +49,12 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
     }
     }
     
-    PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
-    return NULL;
+    return PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
     
   }
   }
   
-  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
-  return NULL;
+  return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
   
 }
 
@@ -70,25 +68,24 @@ PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* me
     if (strcmp(se.members[j].name, member) == 0) {
       struct_member_entry sme = se.members[j];
       
-      return PyAutoConvert_To_TypeId(sme.type, val, cstruct+sme.offset);
+      PyAutoConvert_To_TypeId(sme.type, val, cstruct+sme.offset);
+      if (PyErr_Occurred()) { return NULL; } else { Py_RETURN_NONE; }
     }
     }
     
-    PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
-    return NULL;
+    return PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
     
   }
   }
   
-  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
-  return NULL;
+  return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
 
 }
 
 void PyAutoStruct_Register_TypeId(PyAutoType type) {
   
   if (num_struct_entries >= num_reserved_struct_entries) {
-    num_reserved_struct_entries += 512;
+    num_reserved_struct_entries += 128;
     struct_entries = realloc(struct_entries, sizeof(struct_entry) * num_reserved_struct_entries);
   }
   

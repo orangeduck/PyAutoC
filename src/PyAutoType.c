@@ -11,7 +11,7 @@ static type_name* type_names;
 static type_size* type_sizes;
 
 static int num_types = 0;
-static int num_reserved_types = 512;
+static int num_reserved_types = 128;
 
 void PyAutoType_Initialize() {
   
@@ -38,7 +38,7 @@ PyAutoType PyAutoType_Register(const char* type, int size) {
   }
   
   if (num_types >= num_reserved_types) {
-    num_reserved_types += 512;
+    num_reserved_types += 128;
     type_names = realloc(type_names, sizeof(type_name) * num_reserved_types);
     type_sizes = realloc(type_sizes, sizeof(type_size) * num_reserved_types);
   }

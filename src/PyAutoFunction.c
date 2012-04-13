@@ -15,7 +15,7 @@ typedef struct {
 
 static func_entry* func_entries;
 static int num_func_entries = 0;
-static int num_reserved_func_entries = 512;
+static int num_reserved_func_entries = 128;
 
 void PyAutoFunction_Initialize() {
   func_entries = malloc(sizeof(func_entry) * num_reserved_func_entries);
@@ -48,8 +48,8 @@ static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
   int arg_offset = 0;
   for(int j = 0; j < fe.num_args; j++) { 
     PyObject* py_arg = PyTuple_GetItem(args, j);
-    PyObject* err = PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data + arg_offset);
-    if (err == NULL) { return NULL; } else { Py_DECREF(err); }
+    PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data + arg_offset);
+    if (PyErr_Occurred()) { return NULL; }
     arg_offset += PyAutoType_Size(fe.arg_types[j]);
   }
   
@@ -70,8 +70,7 @@ PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
     if (func_entries[i].func == c_func) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
-  PyErr_Format(PyExc_NameError, "Function at %p is not registered!", c_func);
-  return NULL;
+  return PyErr_Format(PyExc_NameError, "Function at %p is not registered!", c_func);
   
 }
 
@@ -81,8 +80,7 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
     if (strcmp(func_entries[i].name, c_func_name) == 0) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
-  PyErr_Format(PyExc_NameError, "Function %s is not registered!", c_func_name);
-  return NULL;
+  return PyErr_Format(PyExc_NameError, "Function %s is not registered!", c_func_name);
 
 }
 
@@ -94,7 +92,7 @@ void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name,
   }
   
   if (num_func_entries >= num_reserved_func_entries) {
-    num_reserved_func_entries += 512;
+    num_reserved_func_entries += 128;
     func_entries = realloc(func_entries, sizeof(func_entry) * num_reserved_func_entries);
   }
   
