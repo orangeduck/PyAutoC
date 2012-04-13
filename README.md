@@ -97,10 +97,15 @@ static PyObject* convert_from_pair(void* data) {
 	return Py_BuildValue("(ii)", p.x, p.y);
 }
 
-void convert_to_pair(PyObject* pyobj, void* out) {
+static PyObject* convert_to_pair(PyObject* pyobj, void* out) {
 	pair* p = (pair*)out;
 	p->x = PyInt_AsLong(PyTuple_GetItem(pyobj, 0));
 	p->y = PyInt_AsLong(PyTuple_GetItem(pyobj, 1));
+	if (PyErr_Occurred()) {
+		return NULL;
+	} else {
+		Py_RETURN_NONE;
+	}
 }
 
 PyAutoConvert_Register(pair, convert_from_pair, convert_to_pair);
@@ -112,6 +117,8 @@ Now it is possible to call any functions with 'pair' as an argument or return ty
 pair p = {1, 2};
 PyObject* pypair = PyAutoConvert_From(pair, &p);  
 ```
+
+Note that even convert_to_pair returns an PyObject*. This is for error handling and like the rest of the Python/C API NULL is returned on error otherwise it returns None. This helps streamline handling and it is the responsibility of the converting functions to make sure the type arguments are correct. Remember that None is just like any other PyObject. It needs to be Py\_DECREF()'ed when done with and so this return argument shouldn't be forgotten.
 
 Extended Usage 1
 ----------------
@@ -158,7 +165,7 @@ Then in Python...
 
 ```python
 import pyautoc_demo
-result = pyautoc_demo.call("add_numbers", 5, 6.13);
+pyautoc_demo.call("add_numbers", 5, 6.13);
 pyautoc_demo.call("hello_world", "Daniel");
 ```
 
@@ -233,7 +240,7 @@ For this to work you need to somehow get a PyAutoType value. This can be found b
 Warnings/Issues
 ---------------
 
-* The handling of errors is done via Python Exceptions. Checking for them in C is important or you'll probably end up with a segfault somewhere.
+* The handling of errors is done via Python Exceptions. Checking for them in C is important or you'll probably end up with a segfault or garbage values.
 
 * I've not yet managed to get PyAutoC to compile using MSVS and due to the heavy macro use and lack of C99 I don't know if I can. Until I look into it more, compile any extensions under windows with MinGW and it will probably be okay.
 
