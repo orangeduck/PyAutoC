@@ -230,6 +230,37 @@ The true power of PyAutoC comes if you look a level deeper. If you use __PyAutoS
 
 For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into __PyAutoType\_Register__. The __PyAutoType\_Register__ function is a simple function which gives a unique identifier to each new string it encounters. Run time type-ids are generated for types in this way - the macro preprocessor just turns the token into a string and feeds it into this function. This means that if you give it a string of a previously registered data type it will return a matching Id. One trick I like it to use is to feed into it the __.\_\_class\_\_.\_\_name____ property of a python instance. This means that I can create a new python class with overwritten __\_\_getattr____ and __\_\_setattr____ it will automatically act like the corrisponding C struct with the same name - providing it has been registered by some developer.
 	
+Managing Behaviour
+------------------
+
+Often in C, the same types can have different meanings. For example an int* could either mean that a function wants an array of integers or that it outputs some integer. We can change the behaviour of PyAutoC without changing the function signature by using typedefs and new conversion functions. Then on function registration you just use the newly defined type rather than the old one. Providing the types are truely the same there wont be any problems with converting types or breaking the artificial stack.
+
+```c
+
+static void print_int_list(int* list, int num_ints) {
+	for(int i = 0; i < num_ints; i++) {
+		printf("Int %i: %i\n", i, list[i]);
+	}
+}
+
+typedef int* int_list;
+
+static int list_space[512];
+static void convert_to_int_list(PyObject* pyobj, void* out) {
+	for(int i = 0; i < PyList_Size(pyobj); i++) {
+		list_space[i] = PyInt_AsLong(PyList_GetItem(pyobj, i));
+	}
+	*(int_list*)out = list_space;
+}
+
+PyAutoConvert_RegisterTo(int_list, convert_to_int_list);
+
+PyAutoFunction_RegisterArgs2Void(print_int_list, void, int_list, int);
+
+```
+
+As you can probably see, automatic wrapping and type conversion becomes hard when memory management and pointers are involved. I'm looking at ways to improve this, perhaps with the ability to register 'before' and 'after' methods for certain functions or conversions.
+
 Warnings/Issues
 ---------------
 
