@@ -110,8 +110,16 @@ Now it is possible to call any functions with __pair__ as an argument or return 
 
 ```c
 pair p = {1, 2};
-PyObject* pypair = PyAutoConvert_From(pair, &p);  
+PyObject* pypair = PyAutoConvert_From(pair, &p);
 ```
+
+Runtime?
+--------
+
+When normally building a Python/C extension all accessible functions must be statically declared in a methods table and compiled. Using PyAutoC, users and developers can register new functions, structs and type conversion _as the program is running_. This means you can essentially create a set of tools which let other developers extend what is accessible from Python just by writing their own C functions and structs.
+
+It can also mean that lots of your job is cut out by using strings and dynamic elements from python, as shown below...
+
 
 Extended Usage 1
 ----------------
