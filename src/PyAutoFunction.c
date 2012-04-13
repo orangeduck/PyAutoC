@@ -2,7 +2,7 @@
 #include "PyAutoConvert.h"
 #include "PyAutoFunction.h"
 
-#define MAX_ARG_NUM 5
+#define MAX_ARG_NUM 10
 
 typedef struct {
   char* name;

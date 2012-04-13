@@ -241,7 +241,7 @@ Warnings/Issues
 
 ```c
 PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
-PyAutoFunction_RegisterVoidArgs3(add_numbers_message, void, char*, int, float);
+PyAutoFunction_RegisterArgs3Void(add_numbers_message, void, char*, int, float);
 ```
 	
 * Using PyAutoC for functions creates a small memory and performance overhead. This is because it duplicates much of the process involved in managing the stack such as copying stack data. Because most of the logic happens at run-time it also uses a lot of function pointers. These cannot be optimised and inlined very easily so processes such as converting lots of Python data to C data can be slower than if the process is declared statically. Still, the overhead is fairly minimal and if you are wrapping with a scripting language like python then perhaps it is less of a concern.
