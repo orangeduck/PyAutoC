@@ -167,7 +167,7 @@ Once you have this basic interface it is easy to intergrate more complicated and
 Extended Usage 2
 ----------------
 
-Because PyAutoC lets you register and access new Python functions at run time it is perfect for automatically wrapping existing C Structs as Python classes. By overriding __ \_\_getattr\_\_ __ and __ \_\_setattr\_\_ __ of a class we can easily make a Python object that behaves as if it were a C struct.
+Because PyAutoC lets you register and access new Python functions at run time it is perfect for automatically wrapping existing C Structs as Python classes. By overriding __\_\_getattr\____ and __\_\_setattr\____ of a class we can easily make a Python object that behaves as if it were a C struct.
 
 ```python
 import birdie
@@ -224,11 +224,11 @@ A lot less work than writing a bunch of getters and setters!
 
 The __get\_instance\_ptr__ function is left for the user to implement and there are lots of options. The idea is that somehow the python instance should tell you how to get a pointer to the actual struct instance in C which it represents. One option is to store C pointers in the python instance using something like __PyCObject\_FromVoidPtr__. An alternative I like is to just store a string in the python instance which uniquely identifies it. Once you have this, in C it is possible to just look this string up in a dictionary or similar to find the actual pointer.
 
-For fun why not try also overriding __ \_\_init\_\_ __ and __ \_\_del\_\_ __ to call some C functions which allocate and decallocate the structure you are emulating, storing some data to let you identify the instance later. It is also easy to extend the above technique so that, as well as members, the class is able to look up and execute methods!
+For fun why not try also overriding __\_\_init\____ and __\_\_del\____ to call some C functions which allocate and decallocate the structure you are emulating, storing some data to let you identify the instance later. It is also easy to extend the above technique so that, as well as members, the class is able to look up and execute methods!
 
 The true power of PyAutoC comes if you look a level deeper. If you use __PyAutoStruct\_GetMember\_TypeId__ or __PyAutoStruct\_SetMember\_TypeId__ you can even extend the above code to work for arbritary structs/classes which developers can add to.
 
-For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into __PyAutoType\_Register__. The __PyAutoType\_Register__ function is a simple function which gives a unique identifier to each new string it encounters. Run time type-ids are generated for types in this way - the macro preprocessor just turns the token into a string and feeds it into this function. This means that if you give it a string of a previously registered data type it will return a matching Id. One trick I like it to use is to feed into it the __ .\_\_class\_\_.\_\_name\_\_ __ property of a python instance. This means that I can create a new python class with overwritten __ \_\_getattr\_\_ __ and __ \_\_setattr\_\_ __ it will automatically act like the corrisponding C struct with the same name - providing it has been registered by some developer.
+For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into __PyAutoType\_Register__. The __PyAutoType\_Register__ function is a simple function which gives a unique identifier to each new string it encounters. Run time type-ids are generated for types in this way - the macro preprocessor just turns the token into a string and feeds it into this function. This means that if you give it a string of a previously registered data type it will return a matching Id. One trick I like it to use is to feed into it the __.\_\_class\_\_.\_\_name\____ property of a python instance. This means that I can create a new python class with overwritten __\_\_getattr\____ and __\_\_setattr\____ it will automatically act like the corrisponding C struct with the same name - providing it has been registered by some developer.
 	
 Warnings/Issues
 ---------------
