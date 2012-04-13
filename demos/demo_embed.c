@@ -25,8 +25,7 @@ static PyObject* birdie_set_attr(PyObject* unused, PyObject* args) {
 	PyObject* val = PyTuple_GetItem(args, 2);
 	
 	birdie* bird = get_instance_ptr(self);
-	PyAutoStruct_SetMember(birdie, bird, PyString_AsString(attr), val);
-	Py_RETURN_NONE;
+	return PyAutoStruct_SetMember(birdie, bird, PyString_AsString(attr), val);
 }
 
 static PyMethodDef method_table[] = {

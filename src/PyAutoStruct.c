@@ -1,4 +1,3 @@
-#include "PyAutoError.h"
 #include "PyAutoConvert.h"
 #include "PyAutoStruct.h"
 
@@ -50,16 +49,18 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
     }
     }
     
-    PyAutoError("Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
+    PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
+    return NULL;
     
   }
   }
   
-  PyAutoError("Struct '%s' not registered!", PyAutoType_Name(type));
+  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
+  return NULL;
   
 }
 
-void PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
+PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
 
   for(int i = 0; i < num_struct_entries; i++) {
   if (type == struct_entries[i].type_id) {
@@ -73,12 +74,14 @@ void PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member,
     }
     }
     
-    PyAutoError("Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
+    PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
+    return NULL;
     
   }
   }
   
-  PyAutoError("Struct '%s' not registered!", PyAutoType_Name(type));
+  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
+  return NULL;
 
 }
 
@@ -124,6 +127,7 @@ void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoTyp
   }
   }
   
-  PyAutoError("Struct '%s' not registered!", PyAutoType_Name(type));
+  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
+  return;
 
 }

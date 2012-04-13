@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 }
 ```
 	
-Structs work similarly to their functional counterparts. They can be accessed at runtime and do automatic conversion of types. As you can see by the "Py\_DECREF" function all PyAutoC functions which return a PyObject\* return a new reference.
+Structs work similarly to their functional counterparts. They can be accessed at runtime and do automatic conversion of types.
 
 New Argument Types
 ------------------
@@ -204,8 +204,7 @@ static PyObject* birdie_set_attr(PyObject* unused, PyObject* args) {
 	PyObject* val = PyTuple_GetItem(args, 2);
 	
 	birdie* bird = get_instance_ptr(self);
-	PyAutoStruct_SetMember(birdie, bird, PyString_AsString(attr), val);
-	Py_RETURN_NONE;
+	return PyAutoStruct_SetMember(birdie, bird, PyString_AsString(attr), val);
 }
 
 static PyMethodDef method_table[] = {
@@ -234,7 +233,7 @@ For this to work you need to somehow get a PyAutoType value. This can be found b
 Warnings/Issues
 ---------------
 
-* All PyAutoC functions which return a PyObject* return a new reference! If you are using them in C code don't forget to "Py\_DECREF" them!
+* The handling of errors is done via Python Exceptions. Checking for them in C is important or you'll probably end up with a segfault somewhere.
 
 * I've not yet managed to get PyAutoC to compile using MSVS and due to the heavy macro use and lack of C99 I don't know if I can. Until I look into it more, compile any extensions under windows with MinGW and it will probably be okay.
 

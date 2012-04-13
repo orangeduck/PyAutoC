@@ -13,7 +13,7 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
 
 #define PyAutoStruct_Set(type, cstruct, member, val) PyAutoStruct_SetMember_TypeId(PyTypeId(type), cstruct, #member, val)
 #define PyAutoStruct_SetMember(type, cstruct, member, val) PyAutoStruct_SetMember_TypeId(PyTypeId(type), cstruct, member, val)
-void PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val);
+PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val);
 
 #define PyAutoStruct_Register(type) PyAutoStruct_Register_TypeId(PyTypeId(type))
 void PyAutoStruct_Register_TypeId(PyAutoType type);

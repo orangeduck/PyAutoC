@@ -1,4 +1,3 @@
-#include "PyAutoError.h"
 #include "PyAutoType.h"
 #include "PyAutoConvert.h"
 #include "PyAutoFunction.h"
@@ -49,7 +48,8 @@ static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
   int arg_offset = 0;
   for(int j = 0; j < fe.num_args; j++) { 
     PyObject* py_arg = PyTuple_GetItem(args, j);
-    PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data + arg_offset);
+    PyObject* err = PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data + arg_offset);
+    if (err == NULL) { return NULL; } else { Py_DECREF(err); }
     arg_offset += PyAutoType_Size(fe.arg_types[j]);
   }
   
@@ -59,8 +59,9 @@ static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
   
   free(arg_data);
   free(ret_data);
+  
   return py_ret;
-
+  
 }
 
 PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
@@ -69,7 +70,8 @@ PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
     if (func_entries[i].func == c_func) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
-  PyAutoError("Function at %p is not registered!", c_func);
+  PyErr_Format(PyExc_NameError, "Function at %p is not registered!", c_func);
+  return NULL;
   
 }
 
@@ -79,15 +81,16 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
     if (strcmp(func_entries[i].name, c_func_name) == 0) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
-  PyAutoError("Function %s is not registered!", c_func_name);
-
+  PyErr_Format(PyExc_NameError, "Function %s is not registered!", c_func_name);
+  return NULL;
 
 }
 
 void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType type_id, int num_args, ...) {
   
   if (num_args >= MAX_ARG_NUM) {
-    PyAutoError("Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
+    PyErr_Format(PyExc_Exception, "Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
+    return;
   }
   
   if (num_func_entries >= num_reserved_func_entries) {
