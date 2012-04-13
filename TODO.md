@@ -1,4 +1,6 @@
 TODO
 ====
 
-* When passing values for registered functions, rather than heap allocation, for small values use a hard-coded bulk of memory as a stack.
+* Write some tests. Fix any bugs.
+* Make a way to register more complicated conversion functions to allow for memory management etc.
+

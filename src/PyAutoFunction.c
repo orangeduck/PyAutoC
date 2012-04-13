@@ -40,25 +40,63 @@ static int total_arg_size(func_entry fe) {
   
 }
 
-static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
+#define ret_stack_size 128
+#define arg_stack_size 1024
 
-  void* ret_data = malloc(PyAutoType_Size(fe.type_id));
-  void* arg_data = malloc(total_arg_size(fe));
+static char ret_stack[128];
+static void* ret_stack_ptr = ret_stack;
+
+static char arg_stack[1024];
+static void* arg_stack_ptr = arg_stack;
+
+static int ret_stack_space() {
+  return (void*)ret_stack - ret_stack_ptr + ret_stack_size;
+}
+
+static int arg_stack_space() {
+  return (void*)arg_stack - arg_stack_ptr + arg_stack_size;
+}
+
+static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
   
-  int arg_offset = 0;
-  for(int j = 0; j < fe.num_args; j++) { 
-    PyObject* py_arg = PyTuple_GetItem(args, j);
-    PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data + arg_offset);
-    if (PyErr_Occurred()) { return NULL; }
-    arg_offset += PyAutoType_Size(fe.arg_types[j]);
+  int ret_data_size = PyAutoType_Size(fe.type_id);
+  int arg_data_size = total_arg_size(fe);
+  
+  int ret_using_heap = 0; int arg_using_heap = 0;
+  void* ret_data = ret_stack_ptr;
+  void* arg_data = arg_stack_ptr;
+  
+  if (ret_data_size > ret_stack_space()) {
+    ret_using_heap = 1; ret_data = malloc(ret_data_size);
   }
   
-  fe.ac_func(ret_data, arg_data);
+  if (arg_data_size > arg_stack_space()) {
+    arg_using_heap = 1; arg_data = malloc(arg_data_size);
+  }
   
+  for(int j = 0; j < fe.num_args; j++) { 
+    PyObject* py_arg = PyTuple_GetItem(args, j);
+    PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data);
+    
+    if (PyErr_Occurred()) {
+      if (ret_using_heap) free(ret_data);
+      if (arg_using_heap) free(arg_data);
+      return NULL;
+    }
+    
+    arg_data += PyAutoType_Size(fe.arg_types[j]);
+  }
+  
+  /* If not using heap update stack pointers */
+  if (!ret_using_heap) ret_stack_ptr = ret_data;
+  if (!arg_using_heap) arg_stack_ptr = arg_data;
+  
+  fe.ac_func(ret_data, arg_data);
   PyObject* py_ret = PyAutoConvert_From_TypeId(fe.type_id, ret_data);
   
-  free(arg_data);
-  free(ret_data);
+  /* Either free heap data or reduce stack pointers */
+  if (ret_using_heap) { free(ret_data); } else { ret_stack_ptr -= ret_data_size; } 
+  if (arg_using_heap) { free(arg_data); } else { arg_stack_ptr -= arg_data_size; }
   
   return py_ret;
   

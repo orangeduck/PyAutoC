@@ -62,9 +62,11 @@ PyAutoType PyAutoType_Find(char* type) {
 }
 
 const char* PyAutoType_Name(PyAutoType id) {
+  if (id == -1) return "Unknown Type";
   return type_names[id];
 }
 
 int PyAutoType_Size(PyAutoType id) {
+  if (id == -1) return -1;
   return type_sizes[id];
 }

@@ -69,9 +69,9 @@ int main(int argc, char **argv) {
 	PyAutoStruct_RegisterMember(vector3, z, float);
 
 	vector3 position = {1.0f, 2.11f, 3.16f};
-	PyObject* y = PyAutoStruct_Get(vector3, &position, y);
-	PyObject_Print(y, stdout, 0);
-	Py_DECREF(y);
+	PyObject* mem_y = PyAutoStruct_Get(vector3, &position, y);
+	PyObject_Print(mem_y, stdout, 0);
+	Py_DECREF(mem_y);
 	
     PyAutoC_Finalize();
 	Py_Finalize();
@@ -112,13 +112,6 @@ Now it is possible to call any functions with __pair__ as an argument or return 
 pair p = {1, 2};
 PyObject* pypair = PyAutoConvert_From(pair, &p);
 ```
-
-Runtime?
---------
-
-When normally building a Python/C extension all accessible functions must be statically declared in a methods table and compiled. Using PyAutoC, users and developers can register new functions, structs and type conversion _as the program is running_. This means you can essentially create a set of tools which let other developers extend what is accessible from Python just by writing their own C functions and structs.
-
-It can also mean that lots of your job is cut out by using strings and dynamic elements from python, as shown below...
 
 
 Extended Usage 1
@@ -170,12 +163,21 @@ pyautoc_demo.call("add_numbers", 5, 6.13);
 pyautoc_demo.call("hello_world", "Daniel");
 ```
 
-Once you have this basic interface it is easy to intergrate more complicated and transparent APIs with some more complicated Python. For Example...
+Once you have this basic interface it is easy to intergrate more complicated and transparent APIs with some more complicated Python.
+
+
+Runtime?
+--------
+
+When normally building a Python/C extension all accessible functions must be statically declared in a methods table and compiled. Using PyAutoC, users and developers can register new functions, structs and type conversions _as the program is running_. This means you can essentially create a set of tools which let other developers extend what is accessible from Python just by writing their own C functions and structs.
+
+It can also mean that lots of your job is cut out by using strings and dynamic elements from python. For example...
+
 
 Extended Usage 2
 ----------------
 
-Because PyAutoC lets you register and access new Python functions at run time it is perfect for automatically wrapping existing C Structs as Python classes. By overriding __\_\_getattr____ and __\_\_setattr____ of a class we can easily make a Python object that behaves as if it were a C struct.
+PyAutoC is perfect for automatically wrapping existing C Structs as Python classes. By overriding __\_\_getattr____ and __\_\_setattr____ of a class we can easily make a Python object that behaves as if it were a C struct.
 
 ```python
 import birdie
@@ -241,7 +243,7 @@ For this to work you need to somehow get a PyAutoType value. This can be found b
 Managing Behaviour
 ------------------
 
-Often in C, the same types can have different meanings. For example an int* could either mean that a function wants an array of integers or that it outputs some integer. We can change the behaviour of PyAutoC without changing the function signature by using typedefs and new conversion functions. Then on function registration you just use the newly defined type rather than the old one. Providing the types are truely the same there wont be any problems with converting types or breaking the artificial stack.
+Often in C, the same types can have different meanings. For example an __int*__ could either mean that a function wants an array of integers or that it outputs some integer. We can change the behaviour of PyAutoC without changing the function signature by using typedefs and new conversion functions. Then on function registration you just use the newly defined type rather than the old one. Providing the types are truely the same there wont be any problems with converting types or breaking the artificial stack.
 
 ```c
 

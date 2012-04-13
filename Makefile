@@ -8,8 +8,9 @@ PLATFORM = $(shell uname)
 ifeq ($(findstring Linux,$(PLATFORM)),Linux)
 	INCS= -I ./include -I/usr/include/python2.7
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g -fPIC
-	LFLAGS= -shared
+	LFLAGS= -lpython2.7
 	DISTUTIL=
+	
 endif
 
 ifeq ($(findstring MINGW,$(PLATFORM)),MINGW)
