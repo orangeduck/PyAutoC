@@ -51,6 +51,16 @@ PyAutoType PyAutoType_Register(const char* type, int size) {
   return num_types-1;
 }
 
+PyAutoType PyAutoType_Find(char* type) {
+
+  for(int i = 0; i < num_types; i++) {
+    if (strcmp(type, type_names[i]) == 0) return i;
+  }
+  
+  return -1;
+
+}
+
 const char* PyAutoType_Name(PyAutoType id) {
   return type_names[id];
 }
