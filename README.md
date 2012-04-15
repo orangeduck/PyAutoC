@@ -82,6 +82,24 @@ int main(int argc, char **argv) {
 	
 Structs work similarly to their functional counterparts. They can be accessed at runtime and do automatic conversion of types.
 
+Still too much work?
+--------------------
+
+I've included a basic python script which will autogenerate PyAutoC code for structs and functions from C headers.
+
+```
+$ python autogen.py ../Corange/include/assets/sound.h
+
+PyAutoStruct_Register(sound);
+PyAutoStruct_RegisterMember(sound, data, char*);
+PyAutoStruct_RegisterMember(sound, length, int);
+
+PyAutoFunction_RegisterArgs1(wav_load_file, sound*, char*);
+PyAutoFunction_RegisterArgs1Void(sound_delete, void, sound*);
+
+```
+ 
+
 New Argument Types
 ------------------
 
@@ -169,9 +187,9 @@ Once you have this basic interface it is easy to intergrate more complicated and
 Runtime?
 --------
 
-When normally building a Python/C extension all accessible functions must be statically declared in a methods table and compiled. Using PyAutoC, users and developers can register new functions, structs and type conversions _as the program is running_. This means you can essentially create a set of tools which let other developers extend what is accessible from Python just by writing their own C functions and structs.
+When normally building a Python/C extension all accessible functions must be statically declared in a methods table and compiled. If a developer wants to add more functions to the Python Bindings he must add more methods to the table. Using PyAutoC, users and developers can register new functions, structs and type conversions _as the program is running_. This means developers can use and extend your Python API without ever touching a PyObject!
 
-It can also mean that lots of your job is cut out by using strings and dynamic elements from python. For example...
+It also means that the job of wrapping is much easier - you can use strings and dynamic elements directly from Python. For example...
 
 
 Extended Usage 2
