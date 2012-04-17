@@ -122,3 +122,15 @@ char* PyAutoHashtable_Find(PyAutoHashtable* ht, void* item) {
   
   return NULL; 
 }
+
+void PyAutoHashtable_Map(PyAutoHashtable* ht, void (*func)(void*)) {
+
+  for(int i = 0; i < ht->size; i++) {
+    PyAutoBucket* b = ht->buckets[i];
+    while (b != NULL) {
+      func(b->item);
+      b = b->next;
+    }
+  }
+}
+

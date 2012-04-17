@@ -6,6 +6,7 @@ OBJ_FILES= $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 PLATFORM = $(shell uname)
 
 ifeq ($(findstring Linux,$(PLATFORM)),Linux)
+	OUT= libpyautoc.so
 	INCS= -I ./include -I/usr/include/python2.7
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g -fPIC
 	LFLAGS= -lpython2.7
@@ -14,13 +15,17 @@ ifeq ($(findstring Linux,$(PLATFORM)),Linux)
 endif
 
 ifeq ($(findstring MINGW,$(PLATFORM)),MINGW)
+	OUT= PyAutoC.dll
 	INCS= -I ./include -I./Python27/include
 	CFLAGS= $(INCS) -std=gnu99 -Wall -Werror -Wno-unused -O3 -g
 	LFLAGS= -g -L./Python27/libs -lpython27 -lmingw32
 	DISTUTIL= -c mingw32
 endif
 
-all: demo_func demo_struct demo_mod demo_embed demo_convert
+all: demo_func demo_struct demo_mod demo_embed demo_convert library
+
+library: $(OBJ_FILES)
+	$(CC) $(OBJ_FILES) $(LFLAGS) -shared -o $(OUT)
 
 demo_func: $(OBJ_FILES)
 	$(CC) demos/demo_func.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@

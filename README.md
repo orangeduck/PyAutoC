@@ -1,6 +1,7 @@
 PyAutoC
 =======
 
+Version 0.7.5
 
 Introduction
 ------------

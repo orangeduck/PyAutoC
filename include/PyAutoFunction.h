@@ -8,7 +8,7 @@
 void PyAutoFunction_Initialize(void);
 void PyAutoFunction_Finalize(void);
 
-PyObject* PyAutoFunction_Call(void* c_func, PyObject* args);
+#define PyAutoFunction_Call(func, args) PyAutoFunction_CallByName(#func, args)
 PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args);
 
 #define PyAutoFunction_RegisterArgs0(func, ret_t) PyAutoFunction_RegisterArgs0_Macro(func, ret_t)
@@ -36,6 +36,6 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args);
 
 typedef void (*PyAutoCFunc)(void*,void*);
 
-void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType ret_tid, int num_args, ...);
+void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, char* name, PyAutoType ret_tid, int num_args, ...);
 
 #endif

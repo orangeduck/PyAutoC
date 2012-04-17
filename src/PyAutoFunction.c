@@ -15,28 +15,20 @@ typedef struct {
   PyAutoType arg_types[MAX_ARG_NUM];
 } func_entry;
 
-static func_entry** func_entries;
-static int num_func_entries = 0;
-static int num_reserved_func_entries = 0;
-
 static PyAutoHashtable* func_table;
 
 void PyAutoFunction_Initialize(void) {
-  
   func_table = PyAutoHashtable_New(1024);
-  func_entries = malloc(sizeof(func_entry*) * num_reserved_func_entries);
+}
+
+static void func_entry_delete(func_entry* fe) {
+  free(fe->name);
+  free(fe);
 }
 
 void PyAutoFunction_Finalize(void) {
-  
+  PyAutoHashtable_Map(func_table, (void(*)(void*))func_entry_delete);
   PyAutoHashtable_Delete(func_table);
-  
-  for(int i = 0; i < num_func_entries; i++) {
-    free(func_entries[i]->name);
-    free(func_entries[i]);
-  }
-
-  free(func_entries);
 }
 
 static int total_arg_size(func_entry* fe) {
@@ -116,16 +108,6 @@ static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
   
 }
 
-PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
-  
-  for(int i = 0; i < num_func_entries; i++) {
-    if (func_entries[i]->func == c_func) return PyAutoFunction_CallEntry(func_entries[i], args);
-  }
-  
-  return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function at %p is not registered!", c_func);
-  
-}
-
 PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
 
   func_entry* fe = PyAutoHashtable_Get(func_table, c_func_name);
@@ -137,23 +119,17 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
 
 }
 
-void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType type_id, int num_args, ...) {
+void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, char* name, PyAutoType type_id, int num_args, ...) {
   
   if (num_args >= MAX_ARG_NUM) {
     PyErr_Format(PyExc_Exception, "PyAutoFunction: Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
     return;
   }
   
-  if (num_func_entries >= num_reserved_func_entries) {
-    num_reserved_func_entries += 128;
-    func_entries = realloc(func_entries, sizeof(func_entry*) * num_reserved_func_entries);
-  }
-  
   func_entry* fe = malloc(sizeof(func_entry));
   fe->name = malloc(strlen(name) + 1);
   strcpy(fe->name, name);
   fe->ac_func = ac_func;
-  fe->func = func;
   fe->type_id = type_id;
   fe->num_args = num_args;
   
@@ -162,9 +138,6 @@ void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name,
   for(int i = 0; i < num_args; i++) {
     fe->arg_types[i] = va_arg(argl, PyAutoType);
   }
-  
-  func_entries[num_func_entries] = fe;
-  num_func_entries++;
   
   PyAutoHashtable_Set(func_table, name, fe);
   

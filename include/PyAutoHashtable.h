@@ -26,4 +26,6 @@ void PyAutoHashtable_Set(PyAutoHashtable* ht, char* string, void* item);
 
 char* PyAutoHashtable_Find(PyAutoHashtable* ht, void* item);
 
+void PyAutoHashtable_Map(PyAutoHashtable* ht, void (*func)(void*));
+
 #endif
