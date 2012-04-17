@@ -3,17 +3,6 @@
 
 #include "PyAutoConvert.h"
 
-static PyAutoConvert_FromFunc* convert_from_funcs;
-static PyAutoConvert_ToFunc* convert_to_funcs;
-
-static PyAutoType* convert_from_type_ids;
-static PyAutoType* convert_to_type_ids;
-
-static int num_convert_from_funcs = 0;
-static int num_reserved_convert_from_funcs = 128;
-static int num_convert_to_funcs = 0;
-static int num_reserved_convert_to_funcs = 128;
-
 static PyAutoHashtable* convert_from_table;
 static PyAutoHashtable* convert_to_table;
 
@@ -21,11 +10,6 @@ void PyAutoConvert_Initialize(void) {
   
   convert_from_table = PyAutoHashtable_New(256);
   convert_to_table = PyAutoHashtable_New(256);
-  
-  convert_from_funcs = malloc(sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
-  convert_to_funcs = malloc(sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
-  convert_from_type_ids = malloc(sizeof(PyAutoType) * num_reserved_convert_from_funcs);
-  convert_to_type_ids = malloc(sizeof(PyAutoType) * num_reserved_convert_to_funcs);
   
   PyAutoConvert_Register(char, PyAutoConvert_PrimFromChar, PyAutoConvert_PrimToChar);
   PyAutoConvert_Register(signed char, PyAutoConvert_PrimFromSignedChar, PyAutoConvert_PrimToSignedChar);
@@ -53,9 +37,6 @@ void PyAutoConvert_Finalize(void) {
   
   PyAutoHashtable_Delete(convert_from_table);
   PyAutoHashtable_Delete(convert_to_table);
-  
-  free(convert_from_funcs);
-  free(convert_to_funcs);
   
 }
 
@@ -91,60 +72,20 @@ void PyAutoConvert_To_TypeId(PyAutoType type_id, PyObject* py_val, void* c_out) 
 
 void PyAutoConvert_Register_TypeId(PyAutoType type_id, PyAutoConvert_FromFunc from_func, PyAutoConvert_ToFunc to_func) {
   
-  if (num_convert_from_funcs >= num_reserved_convert_from_funcs) {
-    num_reserved_convert_from_funcs += 128;
-    convert_from_funcs = realloc(convert_from_funcs, sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
-    convert_from_type_ids = realloc(convert_from_type_ids, sizeof(PyAutoType) * num_reserved_convert_from_funcs);
-  }
-  if (num_convert_to_funcs >= num_reserved_convert_to_funcs) {
-    num_reserved_convert_to_funcs += 128;
-    convert_to_funcs = realloc(convert_to_funcs, sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
-    convert_to_type_ids = realloc(convert_to_type_ids, sizeof(PyAutoType) * num_reserved_convert_to_funcs);
-  }
-  
   PyAutoHashtable_Set(convert_from_table, PyAutoType_Name(type_id), from_func);
-  
-  convert_from_funcs[num_convert_from_funcs] = from_func;
-  convert_from_type_ids[num_convert_from_funcs] = type_id;
-  num_convert_from_funcs++;
-  
   PyAutoHashtable_Set(convert_to_table, PyAutoType_Name(type_id), to_func);
-  
-  convert_to_funcs[num_convert_to_funcs] = to_func;
-  convert_to_type_ids[num_convert_to_funcs] = type_id;
-  num_convert_to_funcs++;
   
 }
 
 void PyAutoConvert_RegisterFrom_TypeId(PyAutoType type_id, PyAutoConvert_FromFunc func) {
-  
-  if (num_convert_from_funcs >= num_reserved_convert_from_funcs) {
-    num_reserved_convert_from_funcs += 512;
-    convert_from_funcs = realloc(convert_from_funcs, sizeof(PyAutoConvert_FromFunc) * num_reserved_convert_from_funcs);
-    convert_from_type_ids = realloc(convert_from_type_ids, sizeof(PyAutoType) * num_reserved_convert_from_funcs);
-  }
-  
+
   PyAutoHashtable_Set(convert_from_table, PyAutoType_Name(type_id), func);
-  
-  convert_from_funcs[num_convert_from_funcs] = func;
-  convert_from_type_ids[num_convert_from_funcs] = type_id;
-  num_convert_from_funcs++;
   
 }
 
 void PyAutoConvert_RegisterTo_TypeId(PyAutoType type_id, PyAutoConvert_ToFunc func) {
   
-  if (num_convert_to_funcs >= num_reserved_convert_to_funcs) {
-    num_reserved_convert_to_funcs += 512;
-    convert_to_funcs = realloc(convert_to_funcs, sizeof(PyAutoConvert_ToFunc) * num_reserved_convert_to_funcs);
-    convert_to_type_ids = realloc(convert_to_type_ids, sizeof(PyAutoType) * num_reserved_convert_to_funcs);
-  }
-  
   PyAutoHashtable_Set(convert_to_table, PyAutoType_Name(type_id), func);
-  
-  convert_to_funcs[num_convert_to_funcs] = func;
-  convert_to_type_ids[num_convert_to_funcs] = type_id;
-  num_convert_to_funcs++;
   
 }
 

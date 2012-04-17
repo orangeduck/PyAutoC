@@ -13,19 +13,18 @@ typedef struct {
   PyAutoType type_id;
   int num_members;
   int num_reserved_members;
-  struct_member_entry* members;
+  struct_member_entry** members;
 } struct_entry;
 
-static struct_entry* struct_entries;
+static struct_entry** struct_entries;
 static int num_struct_entries = 0;
-static int num_reserved_struct_entries = 128;
+static int num_reserved_struct_entries = 0;
 
 static PyAutoHashtable* struct_table;
 
 void PyAutoStruct_Initialize() {
-
   struct_table = PyAutoHashtable_New(256);
-  struct_entries = malloc(sizeof(struct_entry) * num_reserved_struct_entries);
+  struct_entries = malloc(sizeof(struct_entry*) * num_reserved_struct_entries);
 }
 
 void PyAutoStruct_Finalize() {
@@ -33,11 +32,13 @@ void PyAutoStruct_Finalize() {
   PyAutoHashtable_Delete(struct_table);
   
   for(int i = 0; i < num_struct_entries; i++) {
-    for(int j = 0; j < struct_entries[i].num_members; j++) {
-      free(struct_entries[i].members[j].name);
+    for(int j = 0; j < struct_entries[i]->num_members; j++) {
+      free(struct_entries[i]->members[j]->name);
+      free(struct_entries[i]->members[j]);
     }
     
-    free(struct_entries[i].members);
+    free(struct_entries[i]->members);
+    free(struct_entries[i]);
   }
 
   free(struct_entries);
@@ -49,9 +50,9 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
   if (se != NULL) {
   
     for(int j = 0; j < se->num_members; j++) {
-    if (strcmp(se->members[j].name, member) == 0) {
-      struct_member_entry sme = se->members[j];
-      return PyAutoConvert_From_TypeId(sme.type, cstruct+sme.offset);
+    if (strcmp(se->members[j]->name, member) == 0) {
+      struct_member_entry* sme = se->members[j];
+      return PyAutoConvert_From_TypeId(sme->type, cstruct+sme->offset);
     }
     }
     
@@ -60,7 +61,6 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
-  
 }
 
 PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
@@ -69,9 +69,9 @@ PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* me
   if (se != NULL) {
     
     for(int j = 0; j < se->num_members; j++) {
-    if (strcmp(se->members[j].name, member) == 0) {
-      struct_member_entry sme = se->members[j];
-      PyAutoConvert_To_TypeId(sme.type, val, cstruct+sme.offset);
+    if (strcmp(se->members[j]->name, member) == 0) {
+      struct_member_entry* sme = se->members[j];
+      PyAutoConvert_To_TypeId(sme->type, val, cstruct+sme->offset);
       if (PyErr_Occurred()) { return NULL; } else { Py_RETURN_NONE; }
     }
     }
@@ -88,19 +88,19 @@ void PyAutoStruct_Register_TypeId(PyAutoType type) {
   
   if (num_struct_entries >= num_reserved_struct_entries) {
     num_reserved_struct_entries += 128;
-    struct_entries = realloc(struct_entries, sizeof(struct_entry) * num_reserved_struct_entries);
+    struct_entries = realloc(struct_entries, sizeof(struct_entry*) * num_reserved_struct_entries);
   }
   
-  struct_entry se;
-  se.type_id = type;
-  se.num_members = 0;
-  se.num_reserved_members = 32;
-  se.members = malloc(sizeof(struct_member_entry) * se.num_reserved_members);
+  struct_entry* se = malloc(sizeof(struct_entry));
+  se->type_id = type;
+  se->num_members = 0;
+  se->num_reserved_members = 32;
+  se->members = malloc(sizeof(struct_member_entry*) * se->num_reserved_members);
   
   struct_entries[num_struct_entries] = se;
   num_struct_entries++;
   
-  PyAutoHashtable_Set(struct_table, PyAutoType_Name(type), &struct_entries[num_struct_entries-1]);
+  PyAutoHashtable_Set(struct_table, PyAutoType_Name(type), se);
   
 }
 
@@ -112,14 +112,14 @@ void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoTyp
     
     if (se->num_members >= se->num_reserved_members) {
       se->num_reserved_members += 32;
-      se->members = realloc(se->members, sizeof(struct_member_entry) * se->num_reserved_members);
+      se->members = realloc(se->members, sizeof(struct_member_entry*) * se->num_reserved_members);
     }
     
-    struct_member_entry sme;
-    sme.type = member_type;
-    sme.offset = offset;
-    sme.name = malloc(strlen(member) + 1);
-    strcpy(sme.name, member);
+    struct_member_entry* sme = malloc(sizeof(struct_member_entry));
+    sme->type = member_type;
+    sme->offset = offset;
+    sme->name = malloc(strlen(member) + 1);
+    strcpy(sme->name, member);
     
     se->members[se->num_members] = sme;
     se->num_members++;
@@ -157,9 +157,9 @@ PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
     Py_DECREF(args);
     
     for(int j = 0; j < se->num_members; j++) {
-      struct_member_entry sme = se->members[j];
-      PyObject* member = PyAutoConvert_From_TypeId(sme.type, cstruct+sme.offset);
-      PyObject_SetAttrString(instance, sme.name, member);
+      struct_member_entry* sme = se->members[j];
+      PyObject* member = PyAutoConvert_From_TypeId(sme->type, cstruct+sme->offset);
+      PyObject_SetAttrString(instance, sme->name, member);
       Py_DECREF(member);
       PyErr_Print();
     }
@@ -181,9 +181,9 @@ void PyAutoStruct_Convert_To_TypeId(PyAutoType type, PyObject* pyobj, void* out)
   if (se != NULL) {
     
     for(int j = 0; j < se->num_members; j++) {
-      struct_member_entry sme = se->members[j];
-      PyObject* member = PyObject_GetAttrString(pyobj, sme.name);
-      PyAutoStruct_SetMember_TypeId(type, out, sme.name, member);
+      struct_member_entry* sme = se->members[j];
+      PyObject* member = PyObject_GetAttrString(pyobj, sme->name);
+      PyAutoStruct_SetMember_TypeId(type, out, sme->name, member);
       Py_DECREF(member);
     }
     
