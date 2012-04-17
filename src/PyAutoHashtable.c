@@ -3,19 +3,10 @@
 
 #include "PyAutoHashtable.h"
 
-static int hash(char* string, int size) {
-  
-  int total = 1;
-  int i = 0;
-  while(  string[i] != '\0' ) {
-    int value = (int)string[i];
-    total = total + value + i;
-    i++;
-  }
-  
-  total = abs(total % size);
-  
-  return total;
+static int hash(char* s, int size) {
+  int h = 0;
+  while (*s) h = h * 101 + *s++;
+  return abs(h) % size;
 }
 
 static PyAutoBucket* PyAutoBucket_New(char* string, void* item) {
