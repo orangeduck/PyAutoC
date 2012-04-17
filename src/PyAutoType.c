@@ -17,7 +17,6 @@ void PyAutoType_Initialize(void) {
   
   type_names = malloc(sizeof(type_name) * num_reserved_types);
   type_sizes = malloc(sizeof(type_size) * num_reserved_types);
-  
 }
 
 void PyAutoType_Finalize(void) {
@@ -28,10 +27,9 @@ void PyAutoType_Finalize(void) {
   
   free(type_names);
   free(type_sizes);
-  
 }
 
-PyAutoType PyAutoType_Register(const char* type, int size) {
+PyAutoType PyAutoType_Register(char* type, int size) {
   
   for(int i = 0; i < num_types; i++) {
     if (strcmp(type, type_names[i]) == 0) return i;
@@ -58,10 +56,9 @@ PyAutoType PyAutoType_Find(char* type) {
   }
   
   return -1;
-
 }
 
-const char* PyAutoType_Name(PyAutoType id) {
+char* PyAutoType_Name(PyAutoType id) {
   if (id == -1) return "Unknown Type";
   return type_names[id];
 }

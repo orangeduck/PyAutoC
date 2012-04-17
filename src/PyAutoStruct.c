@@ -1,4 +1,6 @@
 #include "PyAutoConvert.h"
+#include "PyAutoHashtable.h"
+
 #include "PyAutoStruct.h"
 
 typedef struct {
@@ -14,15 +16,21 @@ typedef struct {
   struct_member_entry* members;
 } struct_entry;
 
-struct_entry* struct_entries;
-int num_struct_entries = 0;
-int num_reserved_struct_entries = 128;
+static struct_entry* struct_entries;
+static int num_struct_entries = 0;
+static int num_reserved_struct_entries = 128;
+
+static PyAutoHashtable* struct_table;
 
 void PyAutoStruct_Initialize() {
+
+  struct_table = PyAutoHashtable_New(256);
   struct_entries = malloc(sizeof(struct_entry) * num_reserved_struct_entries);
 }
 
 void PyAutoStruct_Finalize() {
+  
+  PyAutoHashtable_Delete(struct_table);
   
   for(int i = 0; i < num_struct_entries; i++) {
     for(int j = 0; j < struct_entries[i].num_members; j++) {
@@ -37,21 +45,18 @@ void PyAutoStruct_Finalize() {
 
 PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* member) {
   
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
-    struct_entry se = struct_entries[i];
-    
-    for(int j = 0; j < se.num_members; j++) {
-    if (strcmp(se.members[j].name, member) == 0) {
-      struct_member_entry sme = se.members[j];
-      
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se != NULL) {
+  
+    for(int j = 0; j < se->num_members; j++) {
+    if (strcmp(se->members[j].name, member) == 0) {
+      struct_member_entry sme = se->members[j];
       return PyAutoConvert_From_TypeId(sme.type, cstruct+sme.offset);
     }
     }
     
     return PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
-    
-  }
+  
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
@@ -60,14 +65,12 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
 
 PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
 
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
-    struct_entry se = struct_entries[i];
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se != NULL) {
     
-    for(int j = 0; j < se.num_members; j++) {
-    if (strcmp(se.members[j].name, member) == 0) {
-      struct_member_entry sme = se.members[j];
-      
+    for(int j = 0; j < se->num_members; j++) {
+    if (strcmp(se->members[j].name, member) == 0) {
+      struct_member_entry sme = se->members[j];
       PyAutoConvert_To_TypeId(sme.type, val, cstruct+sme.offset);
       if (PyErr_Occurred()) { return NULL; } else { Py_RETURN_NONE; }
     }
@@ -75,7 +78,6 @@ PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* me
     
     return PyErr_Format(PyExc_NameError, "PyAutoStruct: Member '%s' not registered for struct '%s'!", member, PyAutoType_Name(type));
     
-  }
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
@@ -98,17 +100,19 @@ void PyAutoStruct_Register_TypeId(PyAutoType type) {
   struct_entries[num_struct_entries] = se;
   num_struct_entries++;
   
+  PyAutoHashtable_Set(struct_table, PyAutoType_Name(type), &struct_entries[num_struct_entries-1]);
+  
 }
 
 
 void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoType member_type, int offset) {
 
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se != NULL) {
     
-    if (struct_entries[i].num_members >= struct_entries[i].num_reserved_members) {
-      struct_entries[i].num_reserved_members += 32;
-      struct_entries[i].members = realloc(struct_entries[i].members, sizeof(struct_member_entry) * struct_entries[i].num_reserved_members);
+    if (se->num_members >= se->num_reserved_members) {
+      se->num_reserved_members += 32;
+      se->members = realloc(se->members, sizeof(struct_member_entry) * se->num_reserved_members);
     }
     
     struct_member_entry sme;
@@ -117,11 +121,10 @@ void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoTyp
     sme.name = malloc(strlen(member) + 1);
     strcpy(sme.name, member);
     
-    struct_entries[i].members[struct_entries[i].num_members] = sme;
-    struct_entries[i].num_members++;
+    se->members[se->num_members] = sme;
+    se->num_members++;
     return;
     
-  }
   }
   
   PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
@@ -131,19 +134,15 @@ void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoTyp
 
 int PyAutoStruct_IsRegistered_TypeId(PyAutoType type) {
   
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
-    return 1; 
-  }
-  }
-  
-  return 0;  
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se == NULL) { return 0; } else { return 1; }
+   
 }
 
 PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
   
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se != NULL) {
     
     PyObject* globals = PyDict_New();
     PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins());
@@ -157,9 +156,8 @@ PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
     PyObject* instance = PyObject_Call(new_class, args, NULL);
     Py_DECREF(args);
     
-    struct_entry se = struct_entries[i];
-    for(int j = 0; j < se.num_members; j++) {
-      struct_member_entry sme = se.members[j];
+    for(int j = 0; j < se->num_members; j++) {
+      struct_member_entry sme = se->members[j];
       PyObject* member = PyAutoConvert_From_TypeId(sme.type, cstruct+sme.offset);
       PyObject_SetAttrString(instance, sme.name, member);
       Py_DECREF(member);
@@ -172,7 +170,6 @@ PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
     return instance;
     
   }
-  }
   
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
 
@@ -180,18 +177,16 @@ PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
 
 void PyAutoStruct_Convert_To_TypeId(PyAutoType type, PyObject* pyobj, void* out) {
 
-  for(int i = 0; i < num_struct_entries; i++) {
-  if (type == struct_entries[i].type_id) {
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se != NULL) {
     
-    struct_entry se = struct_entries[i];
-    for(int j = 0; j < se.num_members; j++) {
-      struct_member_entry sme = se.members[j];
+    for(int j = 0; j < se->num_members; j++) {
+      struct_member_entry sme = se->members[j];
       PyObject* member = PyObject_GetAttrString(pyobj, sme.name);
       PyAutoStruct_SetMember_TypeId(type, out, sme.name, member);
       Py_DECREF(member);
     }
     
-  }
   }
   
   PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));  

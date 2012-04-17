@@ -1,5 +1,7 @@
 #include "PyAutoType.h"
 #include "PyAutoConvert.h"
+#include "PyAutoHashtable.h"
+
 #include "PyAutoFunction.h"
 
 #define MAX_ARG_NUM 10
@@ -17,12 +19,18 @@ static func_entry* func_entries;
 static int num_func_entries = 0;
 static int num_reserved_func_entries = 128;
 
+static PyAutoHashtable* func_table;
+
 void PyAutoFunction_Initialize(void) {
+  
+  func_table = PyAutoHashtable_New(1024);
   func_entries = malloc(sizeof(func_entry) * num_reserved_func_entries);
 }
 
 void PyAutoFunction_Finalize(void) {
-
+  
+  PyAutoHashtable_Delete(func_table);
+  
   for(int i = 0; i < num_func_entries; i++) {
     free(func_entries[i].name);
   }
@@ -30,11 +38,11 @@ void PyAutoFunction_Finalize(void) {
   free(func_entries);
 }
 
-static int total_arg_size(func_entry fe) {
+static int total_arg_size(func_entry* fe) {
   
   int total = 0;
-  for(int i = 0; i < fe.num_args; i++) {
-    total += PyAutoType_Size(fe.arg_types[i]);
+  for(int i = 0; i < fe->num_args; i++) {
+    total += PyAutoType_Size(fe->arg_types[i]);
   }
   return total;
   
@@ -57,9 +65,9 @@ static int arg_stack_space() {
   return (void*)arg_stack - arg_stack_ptr + arg_stack_size;
 }
 
-static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
+static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
   
-  int ret_data_size = PyAutoType_Size(fe.type_id);
+  int ret_data_size = PyAutoType_Size(fe->type_id);
   int arg_data_size = total_arg_size(fe);
   
   int ret_using_heap = 0; int arg_using_heap = 0;
@@ -74,9 +82,9 @@ static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
     arg_using_heap = 1; arg_data = malloc(arg_data_size);
   }
   
-  for(int j = 0; j < fe.num_args; j++) { 
+  for(int j = 0; j < fe->num_args; j++) { 
     PyObject* py_arg = PyTuple_GetItem(args, j);
-    PyAutoConvert_To_TypeId(fe.arg_types[j], py_arg, arg_data);
+    PyAutoConvert_To_TypeId(fe->arg_types[j], py_arg, arg_data);
     
     if (PyErr_Occurred()) {
       if (ret_using_heap) free(ret_data);
@@ -84,15 +92,15 @@ static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
       return NULL;
     }
     
-    arg_data += PyAutoType_Size(fe.arg_types[j]);
+    arg_data += PyAutoType_Size(fe->arg_types[j]);
   }
   
   /* If not using heap update stack pointers */
   if (!ret_using_heap) ret_stack_ptr = ret_data;
   if (!arg_using_heap) arg_stack_ptr = arg_data;
   
-  fe.ac_func(ret_data, arg_data);
-  PyObject* py_ret = PyAutoConvert_From_TypeId(fe.type_id, ret_data);
+  fe->ac_func(ret_data, arg_data);
+  PyObject* py_ret = PyAutoConvert_From_TypeId(fe->type_id, ret_data);
   
   /* Either free heap data or reduce stack pointers */
   if (ret_using_heap) { free(ret_data); } else { ret_stack_ptr -= ret_data_size; } 
@@ -105,7 +113,7 @@ static PyObject* PyAutoFunction_CallEntry(func_entry fe, PyObject* args) {
 PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
   
   for(int i = 0; i < num_func_entries; i++) {
-    if (func_entries[i].func == c_func) return PyAutoFunction_CallEntry(func_entries[i], args);
+    if (func_entries[i].func == c_func) return PyAutoFunction_CallEntry(&func_entries[i], args);
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function at %p is not registered!", c_func);
@@ -114,8 +122,9 @@ PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
 
 PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
 
-  for(int i = 0; i < num_func_entries; i++) {
-    if (strcmp(func_entries[i].name, c_func_name) == 0) return PyAutoFunction_CallEntry(func_entries[i], args);
+  func_entry* fe = PyAutoHashtable_Get(func_table, c_func_name);
+  if (fe != NULL) {
+    return PyAutoFunction_CallEntry(fe, args);
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function %s is not registered!", c_func_name);
@@ -150,5 +159,7 @@ void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name,
   
   func_entries[num_func_entries] = fe;
   num_func_entries++;
+  
+  PyAutoHashtable_Set(func_table, name, &func_entries[num_func_entries-1]);
   
 }
