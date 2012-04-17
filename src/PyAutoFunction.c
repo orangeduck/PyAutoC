@@ -43,10 +43,10 @@ static int total_arg_size(func_entry fe) {
 #define ret_stack_size 128
 #define arg_stack_size 1024
 
-static char ret_stack[128];
+static char ret_stack[ret_stack_size];
 static void* ret_stack_ptr = ret_stack;
 
-static char arg_stack[1024];
+static char arg_stack[arg_stack_size];
 static void* arg_stack_ptr = arg_stack;
 
 static int ret_stack_space() {
@@ -108,7 +108,7 @@ PyObject* PyAutoFunction_Call(void* c_func, PyObject* args) {
     if (func_entries[i].func == c_func) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
-  return PyErr_Format(PyExc_NameError, "Function at %p is not registered!", c_func);
+  return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function at %p is not registered!", c_func);
   
 }
 
@@ -118,14 +118,14 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
     if (strcmp(func_entries[i].name, c_func_name) == 0) return PyAutoFunction_CallEntry(func_entries[i], args);
   }
   
-  return PyErr_Format(PyExc_NameError, "Function %s is not registered!", c_func_name);
+  return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function %s is not registered!", c_func_name);
 
 }
 
 void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, void* func, char* name, PyAutoType type_id, int num_args, ...) {
   
   if (num_args >= MAX_ARG_NUM) {
-    PyErr_Format(PyExc_Exception, "Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
+    PyErr_Format(PyExc_Exception, "PyAutoFunction: Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
     return;
   }
   

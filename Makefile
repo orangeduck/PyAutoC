@@ -20,7 +20,7 @@ ifeq ($(findstring MINGW,$(PLATFORM)),MINGW)
 	DISTUTIL= -c mingw32
 endif
 
-all: demo_func demo_struct demo_mod demo_embed
+all: demo_func demo_struct demo_mod demo_embed demo_convert
 
 demo_func: $(OBJ_FILES)
 	$(CC) demos/demo_func.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@
@@ -33,6 +33,9 @@ demo_mod: $(OBJ_FILES)
 	
 demo_embed: $(OBJ_FILES)
 	$(CC) demos/demo_embed.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@
+	
+demo_convert: $(OBJ_FILES)
+	$(CC) demos/demo_convert.c $(OBJ_FILES) $(CFLAGS) $(LFLAGS) -o demos/$@
 	
 obj/%.o: src/%.c | obj
 	$(CC) $< -c $(CFLAGS) -o $@

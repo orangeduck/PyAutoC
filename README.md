@@ -81,23 +81,6 @@ int main(int argc, char **argv) {
 ```
 	
 Structs work similarly to their functional counterparts. They can be accessed at runtime and do automatic conversion of types.
-
-Still too much work?
---------------------
-
-I've included a basic python script which will autogenerate PyAutoC code for structs and functions from C headers.
-
-```
-$ python autogen.py ../Corange/include/assets/sound.h
-
-PyAutoStruct_Register(sound);
-PyAutoStruct_RegisterMember(sound, data, char*);
-PyAutoStruct_RegisterMember(sound, length, int);
-
-PyAutoFunction_RegisterArgs1(wav_load_file, sound*, char*);
-PyAutoFunction_RegisterArgs1Void(sound_delete, void, sound*);
-
-```
  
 
 New Argument Types
@@ -131,6 +114,47 @@ pair p = {1, 2};
 PyObject* pypair = PyAutoConvert_From(pair, &p);
 ```
 
+Alternatively when you register structs with PyAutoC, if no conversion function is known, it will attempt to automatically convert them. One word of warning - be careful with circular references. The conversion is recurrsive and I've not added in checking yet!
+
+```
+
+typedef struct {
+  char* first_name;
+  char* second_name;
+  float coolness;
+} person_details;
+
+PyAutoStruct_Register(person_details);
+PyAutoStruct_RegisterMember(person_details, first_name, char*);
+PyAutoStruct_RegisterMember(person_details, second_name, char*);
+PyAutoStruct_RegisterMember(person_details, coolness, float);
+
+person_details my_details = {"Daniel", "Holden", 125212.213};
+PyObject* py_details = PyAutoConvert_From(person_details, &my_details);
+PyObject* py_first_name = PyObject_GetAttrString(py_details, "first_name");
+PyObject_Print(py_first_name, stdout, 0);
+
+Py_DECREF(py_first_name);
+Py_DECREF(py_details);
+
+```
+
+Still too much work?
+--------------------
+
+I've included a basic python script which will autogenerate PyAutoC code for structs and functions from C headers.
+
+```
+$ python autogen.py ../Corange/include/assets/sound.h
+
+PyAutoStruct_Register(sound);
+PyAutoStruct_RegisterMember(sound, data, char*);
+PyAutoStruct_RegisterMember(sound, length, int);
+
+PyAutoFunction_RegisterArgs1(wav_load_file, sound*, char*);
+PyAutoFunction_RegisterArgs1Void(sound_delete, void, sound*);
+
+```
 
 Extended Usage 1
 ----------------

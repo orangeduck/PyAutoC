@@ -1,3 +1,5 @@
+#include "PyAutoStruct.h"
+
 #include "PyAutoConvert.h"
 
 static PyAutoConvert_FromFunc* convert_from_funcs;
@@ -55,7 +57,11 @@ PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val) {
     }
   }
   
-  return PyErr_Format(PyExc_TypeError, "Conversion to PyObject from type '%s' not registered!", PyAutoType_Name(type_id));
+  if (PyAutoStruct_IsRegistered_TypeId(type_id)) {
+    return PyAutoStruct_Convert_From_TypeId(type_id, c_val);
+  }
+  
+  return PyErr_Format(PyExc_TypeError, "PyAutoConvert: Conversion to PyObject from type '%s' not registered!", PyAutoType_Name(type_id));
   
 }
 
@@ -67,7 +73,11 @@ void PyAutoConvert_To_TypeId(PyAutoType type_id, PyObject* py_val, void* c_out) 
     }
   }
   
-  PyErr_Format(PyExc_TypeError, "Conversion from PyObject to type '%s' not registered!", PyAutoType_Name(type_id));
+  if (PyAutoStruct_IsRegistered_TypeId(type_id)) {
+    return PyAutoStruct_Convert_To_TypeId(type_id, py_val, c_out);
+  }
+  
+  PyErr_Format(PyExc_TypeError, "PyAutoConvert: Conversion from PyObject to type '%s' not registered!", PyAutoType_Name(type_id));
   
 }
 

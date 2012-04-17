@@ -21,4 +21,13 @@ void PyAutoStruct_Register_TypeId(PyAutoType type);
 #define PyAutoStruct_RegisterMember(type, member, member_type) PyAutoStruct_RegisterMember_TypeId(PyTypeId(type), #member, PyTypeId(member_type), ((long)&(((type*)0)->member)))
 void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoType member_type, int offset);
 
+#define PyAutoStruct_IsRegistered(type) PyAutoStruct_IsRegistered_TypeId(PyTypeId(type))
+int PyAutoStruct_IsRegistered_TypeId(PyAutoType type);
+
+#define PyAutoStruct_Convert_From(type, cstruct) PyAutoStruct_Convert_TypeId(PyTypeId(type), cstruct)
+PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct);
+
+#define PyAutoStruct_Convert_To(type, pyobj, out) PyAutoStruct_Convert_To_TypeId(PyTypeId(type), pyobj, out)
+void PyAutoStruct_Convert_To_TypeId(PyAutoType type, PyObject* pyobj, void* out);
+
 #endif

@@ -128,3 +128,75 @@ void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoTyp
   return;
 
 }
+
+int PyAutoStruct_IsRegistered_TypeId(PyAutoType type) {
+  
+  for(int i = 0; i < num_struct_entries; i++) {
+  if (type == struct_entries[i].type_id) {
+    return 1; 
+  }
+  }
+  
+  return 0;  
+}
+
+PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
+  
+  for(int i = 0; i < num_struct_entries; i++) {
+  if (type == struct_entries[i].type_id) {
+    
+    PyObject* globals = PyDict_New();
+    PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins());
+    
+    char fmtstring[1024];
+    sprintf(fmtstring, "class %s(object): pass\n", PyAutoType_Name(type)); 
+    PyObject* ret = PyRun_String(fmtstring, Py_file_input, globals, globals);
+    PyObject* new_class = PyDict_GetItemString(globals, PyAutoType_Name(type));
+    
+    PyObject* args = PyTuple_New(0);
+    PyObject* instance = PyObject_Call(new_class, args, NULL);
+    Py_DECREF(args);
+    
+    struct_entry se = struct_entries[i];
+    for(int j = 0; j < se.num_members; j++) {
+      struct_member_entry sme = se.members[j];
+      PyObject* member = PyAutoConvert_From_TypeId(sme.type, cstruct+sme.offset);
+      PyObject_SetAttrString(instance, sme.name, member);
+      Py_DECREF(member);
+      PyErr_Print();
+    }
+    
+    Py_DECREF(ret);
+    Py_DECREF(globals);
+    
+    return instance;
+    
+  }
+  }
+  
+  return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
+
+}
+
+void PyAutoStruct_Convert_To_TypeId(PyAutoType type, PyObject* pyobj, void* out) {
+
+  for(int i = 0; i < num_struct_entries; i++) {
+  if (type == struct_entries[i].type_id) {
+    
+    struct_entry se = struct_entries[i];
+    for(int j = 0; j < se.num_members; j++) {
+      struct_member_entry sme = se.members[j];
+      PyObject* member = PyObject_GetAttrString(pyobj, sme.name);
+      PyAutoStruct_SetMember_TypeId(type, out, sme.name, member);
+      Py_DECREF(member);
+    }
+    
+  }
+  }
+  
+  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));  
+  return;
+  
+}
+
+

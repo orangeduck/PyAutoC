@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 	vector3 position = {1.0f, 2.11f, 3.16f};
 
 	PyObject* y = PyAutoStruct_Get(vector3, &position, y);
-	//PyObject_Print(y, stdout, 0);
+	PyObject_Print(y, stdout, 0);
 	Py_DECREF(y);
   
 	PyAutoC_Finalize();
