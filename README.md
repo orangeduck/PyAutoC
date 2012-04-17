@@ -14,8 +14,8 @@ PyAutoC automatically wraps C functions and structs at runtime so that they can 
 PyAutoC is here to help.
 
 
-Basic Function Usage
--------------------- 
+Basic Usage 1
+-------------
     
 ```c
 #include "Python.h"
@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
 PyAutoC will call __add\_numbers__ with values converted from their Python counterparts. It will then convert the return value back into a Python Object. No editing of the original function required.
 
 	
-Basic Struct Usage
------------------- 
+Basic Usage 2
+-------------
 
 ```c
 #include "Python.h"
@@ -83,8 +83,8 @@ int main(int argc, char **argv) {
 Structs work similarly to their functional counterparts. They can be accessed at runtime and do automatic conversion of types.
  
 
-New Argument Types
-------------------
+Type Conversions
+----------------
 
 To call functions or access struct members which have non-primitive types it is possible to register your own conversion functions.
 
@@ -114,9 +114,9 @@ pair p = {1, 2};
 PyObject* pypair = PyAutoConvert_From(pair, &p);
 ```
 
-Alternatively when you register structs with PyAutoC, if no conversion function is known, it will attempt to automatically convert them. One word of warning - be careful with circular references. The conversion is recurrsive and I've not added in checking yet!
+Alternatively, when you register structs with PyAutoC, if no conversion functions are known, it will attempt to automatically convert them. One word of warning - be careful with circular references. The conversion is recursive and given the chance will happily run forever!
 
-```
+```c
 
 typedef struct {
   char* first_name;
@@ -139,7 +139,7 @@ Py_DECREF(py_details);
 
 ```
 
-Still too much work?
+Using C headers
 --------------------
 
 I've included a basic python script which will autogenerate PyAutoC code for structs and functions from C headers.
