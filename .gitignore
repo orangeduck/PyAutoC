@@ -6,3 +6,4 @@ demos/demo_convert
 demos/demo_embed
 demos/demo_func
 demos/demo_struct
+libpyautoc.so
