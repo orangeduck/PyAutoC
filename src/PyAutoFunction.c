@@ -100,6 +100,9 @@ static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
   if (!ret_using_heap) ret_stack_ptr = ret_data;
   if (!arg_using_heap) arg_stack_ptr = arg_data;
   
+  arg_data -= arg_data_size;
+  ret_data -= ret_data_size;
+  
   fe->ac_func(ret_data, arg_data);
   PyObject* py_ret = PyAutoConvert_From_TypeId(fe->type_id, ret_data);
   
