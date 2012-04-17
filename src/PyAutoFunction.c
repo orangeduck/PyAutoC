@@ -96,6 +96,8 @@ static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
     arg_data += PyAutoType_Size(fe->arg_types[j]);
   }
   
+  ret_data += ret_data_size;
+  
   /* If not using heap update stack pointers */
   if (!ret_using_heap) ret_stack_ptr = ret_data;
   if (!arg_using_heap) arg_stack_ptr = arg_data;
