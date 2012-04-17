@@ -16,32 +16,29 @@ typedef struct {
   struct_member_entry** members;
 } struct_entry;
 
-static struct_entry** struct_entries;
-static int num_struct_entries = 0;
-static int num_reserved_struct_entries = 0;
-
 static PyAutoHashtable* struct_table;
 
 void PyAutoStruct_Initialize() {
   struct_table = PyAutoHashtable_New(256);
-  struct_entries = malloc(sizeof(struct_entry*) * num_reserved_struct_entries);
+}
+
+static void struct_entry_delete(struct_entry* se) {
+
+  for(int i = 0; i < se->num_members; i++) {
+    free(se->members[i]->name);
+    free(se->members[i]);
+  }
+  
+  free(se->members);
+  free(se);
+  
 }
 
 void PyAutoStruct_Finalize() {
   
+  PyAutoHashtable_Map(struct_table, (void(*)(void*))struct_entry_delete);
   PyAutoHashtable_Delete(struct_table);
   
-  for(int i = 0; i < num_struct_entries; i++) {
-    for(int j = 0; j < struct_entries[i]->num_members; j++) {
-      free(struct_entries[i]->members[j]->name);
-      free(struct_entries[i]->members[j]);
-    }
-    
-    free(struct_entries[i]->members);
-    free(struct_entries[i]);
-  }
-
-  free(struct_entries);
 }
 
 PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* member) {
@@ -86,19 +83,11 @@ PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* me
 
 void PyAutoStruct_Register_TypeId(PyAutoType type) {
   
-  if (num_struct_entries >= num_reserved_struct_entries) {
-    num_reserved_struct_entries += 128;
-    struct_entries = realloc(struct_entries, sizeof(struct_entry*) * num_reserved_struct_entries);
-  }
-  
   struct_entry* se = malloc(sizeof(struct_entry));
   se->type_id = type;
   se->num_members = 0;
   se->num_reserved_members = 32;
   se->members = malloc(sizeof(struct_member_entry*) * se->num_reserved_members);
-  
-  struct_entries[num_struct_entries] = se;
-  num_struct_entries++;
   
   PyAutoHashtable_Set(struct_table, PyAutoType_Name(type), se);
   

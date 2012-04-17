@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 
   PyObject* args = Py_BuildValue("(if)", 5, 6.13);
   PyObject* result = PyAutoFunction_Call(add_numbers, args);
-  //PyObject_Print(result, stdout, 0);
+  PyObject_Print(result, stdout, 0);
   
   Py_DECREF(result); Py_DECREF(args);
   
