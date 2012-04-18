@@ -45,7 +45,7 @@ void __PyAutoC_##func(void* out, void* args) { \
   *(ret_t*)out = func(a0, a1, a2); }; \
 PyAutoFunction_Register_TypeId(__PyAutoC_##func, #func, PyTypeId(ret_t), 3, PyTypeId(arg0_t), PyTypeId(arg1_t), PyTypeId(arg2_t))
 
-#define PyAutoFunction_RegisterArgs3Void_Macro(func, ret_t, arg0_t, arg1_t) \
+#define PyAutoFunction_RegisterArgs3Void_Macro(func, ret_t, arg0_t, arg1_t, arg2_t) \
 void __PyAutoC_##func(void* out, void* args) { \
   arg0_t a0 = *(arg0_t*)args; \
   arg1_t a1 = *(arg1_t*)(args+sizeof(arg0_t)); \
