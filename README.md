@@ -314,19 +314,41 @@ PyAutoFunction_RegisterArgs2Void(print_int_list, void, int_list, int);
 
 As you can probably see, automatic wrapping and type conversion becomes hard when memory management and pointers are involved. I'm looking at ways to improve this, perhaps with the ability to register 'before' and 'after' methods for certain functions or conversions.
 
-Warnings/Issues
----------------
+FAQ
+---
 
-* The handling of errors is done via Python Exceptions. Checking for them in C is important or you'll probably end up with a segfault or garbage values.
+* How do I handle errors?
+  
+  Error handling is done via Python Exceptions. When in C, if a function returns, it returns NULL on an error. Otherwise use PyErr_Occurred(). When writing your own conversion functions it is best to propagate errors outward in a similar way.
 
-* I've not yet managed to get PyAutoC to compile using MSVS and due to the heavy macro use and lack of C99 I don't know if I can. Until I look into it more, compile any extensions under windows with MinGW and it will probably be okay.
+* Does this work on Linux/Mac/Windows?
+  
+  Should work fine on Linux. I've not got a Mac to compile to but if someone wants to check that out that'd be awesome. Works on windows, but I've not yet managed to get PyAutoC to compile using MSVS. Until I look into it more closely, compile any extensions under windows with MinGW and it will probably be okay.
 
-* The function registration macros are a little verbose and limited though this is unavoidable. Always remember that the argument count must be specified in the name and also if the function returns void.
+* Why are the function registration macros so verbose?
+  
+  Unfortunately this is unavoidable. Just remember that the argument count must be specified in the name and also if the function returns void. All the macros in PyAutoC throw nice readable errors (for example, trying to register a struct member that does not exist), so don't worry to much about messing the system with a typo.
 
 ```c
 PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
 PyAutoFunction_RegisterArgs3Void(add_numbers_message, void, char*, int, float);
 ```
-	
-* Using PyAutoC for functions creates a small memory and performance overhead. This is because it duplicates much of the process involved in managing the stack such as copying stack data. Because most of the logic happens at run-time it also uses a lot of function pointers. These cannot be optimised and inlined very easily so processes such as converting lots of Python data to C data can be slower than if the process is declared statically. Still, the overhead is fairly minimal and if you are wrapping with a scripting language like python then perhaps it is less of a concern.
 
+* Is PyAutoC slow?
+  
+  For most uses PyAutoC has to lookup runtime information in a hashtable. For calling functions it has to duplicate some of the process involved in managing the stack. Perhaps for a very large codebase there might be some overhead in performance and memory but for any normal sized one, this is minimal compared to the internal workings of the Python/C API. If you are concerned about performance you can still wrap your functions manually but perhaps if you are using a scripting language like python it isn't much bother.
+
+* Is this just macro hacks? Can I really use it with my production code?
+
+  There are certainly some macro tricks going on, but most of them are pretty simple or easy to explain - they are just there to save you typing. I use it to wrap my game engine Corange (~10000 LOC, ~1000 functions) without any issues. If you are worried send me an email and I'll explain the internals so that you can decide for yourself.
+  
+* How do unions work?
+
+  They work the same way as structs. All the PyAutoStruct functions should be fine to use on them. Like in C though, accessing them "incorrectly" in python will result in the raw data being interpreted differently. 
+  
+* Does this work with C++?
+  
+  Not something I have tried, though I can't see why it wouldn't work with the C-compatible features. If you want to wrap C++ perhaps you should look into boost.python, which is very similar.
+  
+
+  

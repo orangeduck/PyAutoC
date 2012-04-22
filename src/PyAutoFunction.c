@@ -77,6 +77,13 @@ static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
   
   for(int j = 0; j < fe->num_args; j++) { 
     PyObject* py_arg = PyTuple_GetItem(args, j);
+    
+    if (py_arg == NULL) {
+      if (ret_using_heap) free(ret_data);
+      if (arg_using_heap) free(arg_data);
+      return PyErr_Format(PyExc_TypeError, "PyAutoFunction: Function '%s' called with too few arguments. Expected %i, recieved %i.", fe->name, fe->num_args, j);
+    }
+    
     PyAutoConvert_To_TypeId(fe->arg_types[j], py_arg, arg_data);
     
     if (PyErr_Occurred()) {
@@ -91,8 +98,8 @@ static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
   ret_data += ret_data_size;
   
   /* If not using heap update stack pointers */
-  if (!ret_using_heap) ret_stack_ptr = ret_data;
-  if (!arg_using_heap) arg_stack_ptr = arg_data;
+  if (!ret_using_heap) { ret_stack_ptr = ret_data; }
+  if (!arg_using_heap) { arg_stack_ptr = arg_data; }
   
   arg_data -= arg_data_size;
   ret_data -= ret_data_size;
@@ -115,7 +122,7 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
     return PyAutoFunction_CallEntry(fe, args);
   }
   
-  return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function %s is not registered!", c_func_name);
+  return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function '%s' is not registered!", c_func_name);
 
 }
 

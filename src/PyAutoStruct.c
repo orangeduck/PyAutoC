@@ -60,6 +60,24 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
 }
 
+int PyAutoStruct_HasMember_TypeId(PyAutoType type, char* member) {
+  
+  struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
+  if (se != NULL) {
+  
+    for(int j = 0; j < se->num_members; j++) {
+    if (strcmp(se->members[j]->name, member) == 0) {
+      return 1;
+    }
+    }
+    
+    return 0;
+  }
+  
+  PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
+  return 0;
+}
+
 PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
 
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
@@ -137,9 +155,13 @@ PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
     PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins());
     
     char fmtstring[1024];
-    sprintf(fmtstring, "class %s(object): pass\n", PyAutoType_Name(type)); 
+    sprintf(fmtstring, "class PyAutoStruct_%s(object): pass\n", PyAutoType_Name(type)); 
     PyObject* ret = PyRun_String(fmtstring, Py_file_input, globals, globals);
-    PyObject* new_class = PyDict_GetItemString(globals, PyAutoType_Name(type));
+    Py_DECREF(ret);
+    
+    sprintf(fmtstring, "PyAutoStruct_%s", PyAutoType_Name(type)); 
+    PyObject* new_class = PyDict_GetItemString(globals, fmtstring);
+    Py_DECREF(globals);
     
     PyObject* args = PyTuple_New(0);
     PyObject* instance = PyObject_Call(new_class, args, NULL);
@@ -148,16 +170,12 @@ PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
     for(int j = 0; j < se->num_members; j++) {
       struct_member_entry* sme = se->members[j];
       PyObject* member = PyAutoConvert_From_TypeId(sme->type, cstruct+sme->offset);
+      if (member == NULL) { return NULL; }
       PyObject_SetAttrString(instance, sme->name, member);
       Py_DECREF(member);
-      PyErr_Print();
     }
     
-    Py_DECREF(ret);
-    Py_DECREF(globals);
-    
     return instance;
-    
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
@@ -172,9 +190,11 @@ void PyAutoStruct_Convert_To_TypeId(PyAutoType type, PyObject* pyobj, void* out)
     for(int j = 0; j < se->num_members; j++) {
       struct_member_entry* sme = se->members[j];
       PyObject* member = PyObject_GetAttrString(pyobj, sme->name);
+      if (member == NULL) { return; }
       PyAutoStruct_SetMember_TypeId(type, out, sme->name, member);
       Py_DECREF(member);
     }
+    return;
     
   }
   
