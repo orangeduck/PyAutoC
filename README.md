@@ -317,17 +317,29 @@ As you can probably see, automatic wrapping and type conversion becomes hard whe
 FAQ
 ---
 
+* How do unions work?
+
+  They work the same way as structs. All the PyAutoStruct functions should be fine to use on them. Like in C though, accessing them "incorrectly" in python will result in the raw data being interpreted differently. PyAutoC doesn't do any clever checking for you.
+  
+* How do enums work?
+
+  Enums work like any other type and the best way to deal with them is to write an explicit conversion function. There is no real way to know what storage type compilers will pick for an enum, it could be a unsigned char, signed int, long or anything else. If though, you are sure what storage type the compiler is using for a particular enum, it might be easier to just use that as the registered type and get a conversion for free.
+
 * How do I handle errors?
   
   Error handling is done via Python Exceptions. When in C, if a function returns, it returns NULL on an error. Otherwise use PyErr_Occurred(). When writing your own conversion functions it is best to propagate errors outward in a similar way.
 
 * Does this work on Linux/Mac/Windows?
   
-  Should work fine on Linux. I've not got a Mac to compile to but if someone wants to check that out that'd be awesome. Works on windows, but I've not yet managed to get PyAutoC to compile using MSVS. Until I look into it more closely, compile any extensions under windows with MinGW and it will probably be okay.
+  Should work fine on Linux. I imagine it will be simple to port to Mac but I don't have one to test on. It also compiles fine on Windows providing you use MinGW or Cygwin.
+  
+  I've done some experiments getting PyAutoC to compile in Visual Studio and the port is fairly simple but there are a couple of annoying aspects. If someone is interested I'll be more than happy to share my developments but for now I would rather keep the code in the repo clean. Perhaps if you are doing C++ development you should consider boost.python.
+  
+  To begin with there are two main options, either translate the source files into ANSI C or use the C++ compiler. Converting to ANSI C turned out to be too much of an effort and usage overall requires a C99 or C++ compiler anyway, to allow for some form of nested functions. Going with C++ appears to be the best way. Unfortunately this requires you rename all the PyAutoC file extensions to .cpp. secondly Visual Studio disallows nested functions by default but there is a simple way around this by wrapping them in a struct/class and declaring them static. This means some more edits are required for the Function Registration Macros but again nothing huge. Contact me for more info.
 
 * Why are the function registration macros so verbose?
   
-  Unfortunately this is unavoidable. Just remember that the argument count must be specified in the name and also if the function returns void. All the macros in PyAutoC throw nice readable errors (for example, trying to register a struct member that does not exist), so don't worry to much about messing the system with a typo.
+  Unfortunately this is unavoidable without writing complex assembly code. Just remember that the argument count must be specified in the name and also if the function returns void. All the macros in PyAutoC throw nice readable errors (for example, trying to register a struct member that does not exist), so don't worry to much about messing the system with a typo - in general it wont let you.
 
 ```c
 PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
@@ -340,15 +352,6 @@ PyAutoFunction_RegisterArgs3Void(add_numbers_message, void, char*, int, float);
 
 * Is this just macro hacks? Can I really use it with my production code?
 
-  There are certainly some macro tricks going on, but most of them are pretty simple or easy to explain - they are just there to save you typing. I use it to wrap my game engine Corange (~10000 LOC, ~1000 functions) without any issues. If you are worried send me an email and I'll explain the internals so that you can decide for yourself.
+  There are certainly some macro tricks going on, but most of them are pretty simple and nothing to gruesome - they are just there to save you typing. I use it to wrap my game engine Corange (~10000 LOC, ~1000 functions) without any issues. If you are worried send me an email and I'll explain the internals so that you can decide for yourself.
   
-* How do unions work?
-
-  They work the same way as structs. All the PyAutoStruct functions should be fine to use on them. Like in C though, accessing them "incorrectly" in python will result in the raw data being interpreted differently. 
-  
-* Does this work with C++?
-  
-  Not something I have tried, though I can't see why it wouldn't work with the C-compatible features. If you want to wrap C++ perhaps you should look into boost.python, which is very similar.
-  
-
   
