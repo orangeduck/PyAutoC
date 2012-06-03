@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 }
 ```
 	
-PyAutoC will call __add\_numbers__ with values converted from their Python counterparts. It will then convert the return value back into a Python Object. No editing of the original function required.
+PyAutoC will call `add_numbers` with values converted from their Python counterparts. It will then convert the return value back into a Python Object. No editing of the original function required.
 
 	
 Basic Usage 2
@@ -108,7 +108,7 @@ static void convert_to_pair(PyObject* pyobj, void* out) {
 PyAutoConvert_Register(pair, convert_from_pair, convert_to_pair);
 ```
 
-Now it is possible to call any functions with __pair__ as an argument or return type and PyAutoC will handle any conversions automatically. You can also use the registered functions directly in your code by using PyAutoConvert.
+Now it is possible to call any functions with `pair` as an argument or return type and PyAutoC will handle any conversions automatically. You can also use the registered functions directly in your code by using PyAutoConvert.
 
 ```c
 pair p = {1, 2};
@@ -212,6 +212,8 @@ Once you have this basic interface it is easy to intergrate more complicated and
 Runtime?
 --------
 
+Many developers like to wrap their libraries externally before compile time using programs such as SWIG. This approach has many benefits but can be somewhat brittle and lacking in control. PyAutoC takes a different approach by storing type information and doing conversions and anything else needed at runtime. As well as being a more controlled approach this also allows for some interesting options for dynamic behaviour.
+
 When normally building a Python/C extension all accessible functions must be statically declared in a methods table and compiled. If a developer wants to add more functions to the Python Bindings he must add more methods to the table. Using PyAutoC, users and developers can register new functions, structs and type conversions _as the program is running_. This means developers can use and extend your Python API without ever touching a PyObject!
 
 It also means that the job of wrapping is much easier - you can use strings and dynamic elements directly from Python. For example...
@@ -220,7 +222,7 @@ It also means that the job of wrapping is much easier - you can use strings and 
 Extended Usage 2
 ----------------
 
-PyAutoC is perfect for automatically wrapping existing C Structs as Python classes. By overriding __\_\_getattr____ and __\_\_setattr____ of a class we can easily make a Python object that behaves as if it were a C struct.
+PyAutoC is perfect for automatically wrapping existing C Structs as Python classes. By overriding `__getattr__` and `__setattr__` of a class we can easily make a Python object that behaves as if it were a C struct.
 
 ```python
 import birdie
@@ -275,18 +277,18 @@ Py_InitModule("birdie", method_table);
 
 A lot less work than writing a bunch of getters and setters!
 
-The __get\_instance\_ptr__ function is left for the user to implement and there are lots of options. The idea is that somehow the python instance should tell you how to get a pointer to the actual struct instance in C which it represents. One option is to store C pointers in the python instance using something like __PyCObject\_FromVoidPtr__. An alternative I like is to just store a string in the python instance which uniquely identifies it. Once you have this, in C it is possible to just look this string up in a dictionary or similar to find the actual pointer.
+The `get_instance_ptr` function is left for the user to implement and there are lots of options. The idea is that somehow the python instance should tell you how to get a pointer to the actual struct instance in C which it represents. One option is to store C pointers in the python instance using something like `PyCObject_FromVoidPtr`. An alternative I like is to just store a string in the python instance which uniquely identifies it. Once you have this, in C it is possible to just look this string up in a dictionary or similar to find the actual pointer.
 
-For fun why not try also overriding __\_\_init____ and __\_\_del____ to call some C functions which allocate and decallocate the structure you are emulating, storing some data to let you identify the instance later. It is also easy to extend the above technique so that, as well as members, the class is able to look up and execute methods!
+For fun why not try also overriding `__init__` and `__del__` to call some C functions which allocate and decallocate the structure you are emulating, storing some data to let you identify the instance later. It is also easy to extend the above technique so that, as well as members, the class is able to look up and execute methods!
 
-The true power of PyAutoC comes if you look a level deeper. If you use __PyAutoStruct\_GetMember\_TypeId__ or __PyAutoStruct\_SetMember\_TypeId__ you can even extend the above code to work for arbritary structs/classes which developers can add to.
+The true power of PyAutoC comes if you look a level deeper. If you use `PyAutoStruct_GetMember_TypeId` or `PyAutoStruct_SetMember_TypeId` you can even extend the above code to work for arbritary structs/classes which developers can add to.
 
-For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into __PyAutoType\_Find__. The __PyAutoType\_Find__ function will lookup a string and see if a type has been registered with the same name. This means that if you give it a string of a previously registered data type E.G __"birdie"__, it will return a matching Id. One trick I like it to use is to feed into it the __.\_\_class\_\_.\_\_name____ property of a python instance. This means that I can create a new python class with overwritten __\_\_getattr____ and __\_\_setattr____ it will automatically act like the corrisponding C struct with the same name.
+For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into `PyAutoType_Find`. The `PyAutoType_Find` function will lookup a string and see if a type has been registered with the same name. This means that if you give it a string of a previously registered data type E.G `birdie`, it will return a matching Id. One trick I like it to use is to feed into it the `.__class__.__name__` property of a python instance. This means that I can create a new python class with overwritten `__getattr__` and `__setattr__` it will automatically act like the corrisponding C struct with the same name.
 	
 Managing Behaviour
 ------------------
 
-Often in C, the same types can have different meanings. For example an __int*__ could either mean that a function wants an array of integers or that it outputs some integer. We can change the behaviour of PyAutoC without changing the function signature by using typedefs and new conversion functions. Then on function registration you just use the newly defined type rather than the old one. Providing the types are truely the same there wont be any problems with converting types or breaking the artificial stack.
+Often in C, the same types can have different meanings. For example an `int*` could either mean that a function wants an array of integers or that it outputs some integer. We can change the behaviour of PyAutoC without changing the function signature by using typedefs and new conversion functions. Then on function registration you just use the newly defined type rather than the old one. Providing the types are truely the same there wont be any problems with converting types or breaking the artificial stack.
 
 ```c
 
