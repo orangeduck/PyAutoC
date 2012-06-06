@@ -26,8 +26,8 @@ PyMODINIT_FUNC initpyautoc_demo(void) {
 	PyAutoC_Initialize();
   Py_AtExit(PyAutoC_Finalize);
   
-	PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);	
-	PyAutoFunction_RegisterArgs1Void(hello_world, void, char*);	
+	PyAutoFunction_Register(add_numbers, float, 2, int, float);	
+	PyAutoFunction_RegisterVoid(hello_world, 1, char*);	
 	
   Py_InitModule("pyautoc_demo", method_table);
 }

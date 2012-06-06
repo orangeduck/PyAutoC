@@ -1,7 +1,7 @@
 PyAutoC
 =======
 
-Version 0.7.5
+Version 0.8
 
 Introduction
 ------------
@@ -23,25 +23,25 @@ Basic Usage 1
 #include "PyAutoC.h"
 
 static float add_numbers(int first, float second) {
-	return first + second;
+  return first + second;
 }
 
 int main(int argc, char **argv) {
-  
-	Py_Initialize();
-	PyAutoC_Initialize();
 
-	PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
+  Py_Initialize();
+  PyAutoC_Initialize();
 
-	PyObject* args = Py_BuildValue("(if)", 5, 6.13);
-	PyObject* result = PyAutoFunction_Call(add_numbers, args);
-	PyObject_Print(result, stdout, 0);
-	Py_DECREF(result); Py_DECREF(args);
+  PyAutoFunction_Registe(add_numbers, float, 2, int, float);
 
-	PyAutoC_Finalize();
-	Py_Finalize();
+  PyObject* args = Py_BuildValue("(if)", 5, 6.13);
+  PyObject* result = PyAutoFunction_Call(add_numbers, args);
+  PyObject_Print(result, stdout, 0);
+  Py_DECREF(result); Py_DECREF(args);
 
-	return 0;
+  PyAutoC_Finalize();
+  Py_Finalize();
+
+  return 0;
 }
 ```
 	
@@ -56,28 +56,28 @@ Basic Usage 2
 #include "PyAutoC.h"
 
 typedef struct {
-	float x, y, z;
+  float x, y, z;
 } vector3;
 
 int main(int argc, char **argv) {
-	
-	Py_Initialize();
-    PyAutoC_Initialize();
-	
-	PyAutoStruct_Register(vector3);
-	PyAutoStruct_RegisterMember(vector3, x, float);
-	PyAutoStruct_RegisterMember(vector3, y, float);
-	PyAutoStruct_RegisterMember(vector3, z, float);
 
-	vector3 position = {1.0f, 2.11f, 3.16f};
-	PyObject* mem_y = PyAutoStruct_Get(vector3, &position, y);
-	PyObject_Print(mem_y, stdout, 0);
-	Py_DECREF(mem_y);
-	
-    PyAutoC_Finalize();
-	Py_Finalize();
-	
-	return 0;
+  Py_Initialize();
+  PyAutoC_Initialize();
+
+  PyAutoStruct_Register(vector3);
+  PyAutoStruct_RegisterMember(vector3, x, float);
+  PyAutoStruct_RegisterMember(vector3, y, float);
+  PyAutoStruct_RegisterMember(vector3, z, float);
+
+  vector3 position = {1.0f, 2.11f, 3.16f};
+  PyObject* mem_y = PyAutoStruct_Get(vector3, &position, y);
+  PyObject_Print(mem_y, stdout, 0);
+  Py_DECREF(mem_y);
+
+  PyAutoC_Finalize();
+  Py_Finalize();
+
+  return 0;
 }
 ```
 	
@@ -91,18 +91,18 @@ To call functions or access struct members which have non-primitive types it is 
 
 ```c
 typedef struct {
-	int x, y;
+  int x, y;
 } pair;
 
 static PyObject* convert_from_pair(void* data) {
-	pair p = *(pair*)data;
-	return Py_BuildValue("(ii)", p.x, p.y);
+  pair p = *(pair*)data;
+  return Py_BuildValue("(ii)", p.x, p.y);
 }
 
 static void convert_to_pair(PyObject* pyobj, void* out) {
-	pair* p = (pair*)out;
-	p->x = PyInt_AsLong(PyTuple_GetItem(pyobj, 0));
-	p->y = PyInt_AsLong(PyTuple_GetItem(pyobj, 1));
+  pair* p = (pair*)out;
+  p->x = PyInt_AsLong(PyTuple_GetItem(pyobj, 0));
+  p->y = PyInt_AsLong(PyTuple_GetItem(pyobj, 1));
 }
 
 PyAutoConvert_Register(pair, convert_from_pair, convert_to_pair);
@@ -118,7 +118,6 @@ PyObject* pypair = PyAutoConvert_From(pair, &p);
 Alternatively, when you register structs with PyAutoC, if no conversion functions are known, it will attempt to automatically convert them. One word of warning - be careful with circular references. The conversion is recursive and given the chance will happily run forever!
 
 ```c
-
 typedef struct {
   char* first_name;
   char* second_name;
@@ -137,7 +136,6 @@ PyObject_Print(py_first_name, stdout, 0);
 
 Py_DECREF(py_first_name);
 Py_DECREF(py_details);
-
 ```
 
 Using C headers
@@ -152,8 +150,8 @@ PyAutoStruct_Register(sound);
 PyAutoStruct_RegisterMember(sound, data, char*);
 PyAutoStruct_RegisterMember(sound, length, int);
 
-PyAutoFunction_RegisterArgs1(wav_load_file, sound*, char*);
-PyAutoFunction_RegisterArgs1Void(sound_delete, void, sound*);
+PyAutoFunction_Register(wav_load_file, sound*, 1, char*);
+PyAutoFunction_RegisterVoid(sound_delete, 1, sound*);
 
 ```
 
@@ -167,34 +165,34 @@ You can use PyAutoC to very quickly and easily create Python C modules for a bun
 #include "PyAutoC.h"
 
 static float add_numbers(int first, float second) {
-	return first + second;
+  return first + second;
 }
 
 static void hello_world(char* person) {
-	printf("Hello %s!", person);
+  printf("Hello %s!", person);
 }
 
 static PyObject* call(PyObject* unused, PyObject* args) {
-	PyObject* func = PyTuple_GetItem(args, 0);
-	PyObject* fargs = PyTuple_GetSlice(args, 1, PyTuple_Size(args));
-	PyObject* ret = PyAutoFunction_CallByName(PyString_AsString(func), fargs);
-	Py_DECREF(fargs);
-	return ret;
+  PyObject* func = PyTuple_GetItem(args, 0);
+  PyObject* fargs = PyTuple_GetSlice(args, 1, PyTuple_Size(args));
+  PyObject* ret = PyAutoFunction_CallByName(PyString_AsString(func), fargs);
+  Py_DECREF(fargs);
+  return ret;
 }
 
 static PyMethodDef method_table[] = {
-	{"call", call, METH_VARARGS, ""},
-	{NULL, NULL, 0, NULL},
+  {"call", call, METH_VARARGS, ""},
+  {NULL, NULL, 0, NULL},
 };
 
 PyMODINIT_FUNC initpyautoc_demo(void) {
-	PyAutoC_Initialize();
-    Py_AtExit(PyAutoC_Finalize);
-  
-	PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);	
-	PyAutoFunction_RegisterArgs1Void(hello_world, void, char*);	
+  PyAutoC_Initialize();
+  Py_AtExit(PyAutoC_Finalize);
 
-    Py_InitModule("pyautoc_demo", method_table);
+  PyAutoFunction_Register(add_numbers, float, 2, int, float);	
+  PyAutoFunction_RegisterVoid(hello_world, 1, char*);	
+
+  Py_InitModule("pyautoc_demo", method_table);
 }
 ```
 
@@ -206,7 +204,7 @@ pyautoc_demo.call("add_numbers", 5, 6.13);
 pyautoc_demo.call("hello_world", "Daniel");
 ```
 
-Once you have this basic interface it is easy to intergrate more complicated and transparent APIs with some more complicated Python.
+Once you have this basic interface it is easy to integrate more complicated and transparent APIs with some more complicated Python.
 
 
 Runtime?
@@ -228,8 +226,8 @@ PyAutoC is perfect for automatically wrapping existing C Structs as Python class
 import birdie
 
 class python_birdie(object):
-	def __getattr__(self, attr): return birdie.get_attr(self, attr)
-	def __setattr__(self, attr, val): return birdie.set_attr(self, attr, val)
+    def __getattr__(self, attr): return birdie.get_attr(self, attr)
+    def __setattr__(self, attr, val): return birdie.set_attr(self, attr, val)
 	
 bird = python_birdie()
 print bird.name
@@ -246,26 +244,26 @@ typedef struct {
 } birdie;
 
 static PyObject* birdie_get_attr(PyObject* unused, PyObject* args) {
-	PyObject* self = PyTuple_GetItem(args, 0);
-	PyObject* attr = PyTuple_GetItem(args, 1);
-	
-	birdie* bird = get_instance_ptr(self);
-	return PyAutoStruct_GetMember(birdie, bird, PyString_AsString(attr));
+  PyObject* self = PyTuple_GetItem(args, 0);
+  PyObject* attr = PyTuple_GetItem(args, 1);
+
+  birdie* bird = get_instance_ptr(self);
+  return PyAutoStruct_GetMember(birdie, bird, PyString_AsString(attr));
 }
 
 static PyObject* birdie_set_attr(PyObject* unused, PyObject* args) {
-	PyObject* self = PyTuple_GetItem(args, 0);
-	PyObject* attr = PyTuple_GetItem(args, 1);
-	PyObject* val = PyTuple_GetItem(args, 2);
-	
-	birdie* bird = get_instance_ptr(self);
-	return PyAutoStruct_SetMember(birdie, bird, PyString_AsString(attr), val);
+  PyObject* self = PyTuple_GetItem(args, 0);
+  PyObject* attr = PyTuple_GetItem(args, 1);
+  PyObject* val = PyTuple_GetItem(args, 2);
+
+  birdie* bird = get_instance_ptr(self);
+  return PyAutoStruct_SetMember(birdie, bird, PyString_AsString(attr), val);
 }
 
 static PyMethodDef method_table[] = {
-	{"get_attr", birdie_get_attr, METH_VARARGS, ""},
-	{"set_attr", birdie_set_attr, METH_VARARGS, ""},
-	{NULL, NULL, 0, NULL},
+  {"get_attr", birdie_get_attr, METH_VARARGS, ""},
+  {"set_attr", birdie_set_attr, METH_VARARGS, ""},
+  {NULL, NULL, 0, NULL},
 };
 
 PyAutoStruct_Register(birdie);
@@ -293,24 +291,24 @@ Often in C, the same types can have different meanings. For example an `int*` co
 ```c
 
 static void print_int_list(int* list, int num_ints) {
-	for(int i = 0; i < num_ints; i++) {
-		printf("Int %i: %i\n", i, list[i]);
-	}
+  for(int i = 0; i < num_ints; i++) {
+    printf("Int %i: %i\n", i, list[i]);
+  }
 }
 
 typedef int* int_list;
 
 static int list_space[512];
 static void convert_to_int_list(PyObject* pyobj, void* out) {
-	for(int i = 0; i < PyList_Size(pyobj); i++) {
-		list_space[i] = PyInt_AsLong(PyList_GetItem(pyobj, i));
-	}
-	*(int_list*)out = list_space;
+  for(int i = 0; i < PyList_Size(pyobj); i++) {
+    list_space[i] = PyInt_AsLong(PyList_GetItem(pyobj, i));
+  }
+  *(int_list*)out = list_space;
 }
 
 PyAutoConvert_RegisterTo(int_list, convert_to_int_list);
 
-PyAutoFunction_RegisterArgs2Void(print_int_list, void, int_list, int);
+PyAutoFunction_RegisterVoid(print_int_list, 2, int_list, int);
 
 ```
 
@@ -333,20 +331,9 @@ FAQ
 
 * Does this work on Linux/Mac/Windows?
   
-  Should work fine on Linux. I imagine it will be simple to port to Mac but I don't have one to test on. It also compiles fine on Windows providing you use MinGW or Cygwin.
+  On Linux, yes. On Mac, probably but I don't have one to test on. On Windows, yes under MinGW or Cygwin. The binaries and headers will also link and compile under Visual Studio (in C++ mode).
   
-  I've done some experiments getting PyAutoC to compile in Visual Studio and the port is fairly simple but there are a couple of annoying aspects. If someone is interested I'll be more than happy to share my developments but for now I would rather keep the code in the repo clean. Perhaps if you are doing C++ development you should consider boost.python.
-  
-  To begin with there are two main options, either translate the source files into ANSI C or use the C++ compiler. Converting to ANSI C turned out to be too much of an effort and usage overall requires a C99 or C++ compiler anyway, to allow for some form of nested functions. Going with C++ appears to be the best way. Unfortunately this requires you rename all the PyAutoC file extensions to .cpp. secondly Visual Studio disallows nested functions by default but there is a simple way around this by wrapping them in a struct/class and declaring them static. This means some more edits are required for the Function Registration Macros but again nothing huge. Contact me for more info.
-
-* Why are the function registration macros so verbose?
-  
-  Unfortunately this is unavoidable without writing complex assembly code. Just remember that the argument count must be specified in the name and also if the function returns void. All the macros in PyAutoC throw nice readable errors (for example, trying to register a struct member that does not exist), so don't worry to much about messing the system with a typo - in general it wont let you.
-
-```c
-PyAutoFunction_RegisterArgs2(add_numbers, float, int, float);
-PyAutoFunction_RegisterArgs3Void(add_numbers_message, void, char*, int, float);
-```
+  I've done some experiments getting Lua AutoC to _compile_ under Visual Studio and the port is fairly simple but there are a couple of annoying aspects. If someone is interested I'll be more than happy to share my developments but for now I would rather keep the code in the repo clean.
 
 * Is PyAutoC slow?
   

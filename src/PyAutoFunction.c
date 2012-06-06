@@ -8,17 +8,19 @@
 
 typedef struct {
   char* name;
+  void* src_func;
   PyAutoCFunc ac_func;
-  void* func;
   PyAutoType type_id;
   int num_args;
   PyAutoType arg_types[MAX_ARG_NUM];
 } func_entry;
 
-static PyAutoHashtable* func_table;
+static PyAutoHashtable* func_name_table;
+static PyAutoHashtable* func_ptr_table;
 
 void PyAutoFunction_Initialize(void) {
-  func_table = PyAutoHashtable_New(1024);
+  func_name_table = PyAutoHashtable_New(1024);
+  func_ptr_table = PyAutoHashtable_New(1024);
 }
 
 static void func_entry_delete(func_entry* fe) {
@@ -27,8 +29,9 @@ static void func_entry_delete(func_entry* fe) {
 }
 
 void PyAutoFunction_Finalize(void) {
-  PyAutoHashtable_Map(func_table, (void(*)(void*))func_entry_delete);
-  PyAutoHashtable_Delete(func_table);
+  PyAutoHashtable_Map(func_name_table, (void(*)(void*))func_entry_delete);
+  PyAutoHashtable_Delete(func_name_table);
+  PyAutoHashtable_Delete(func_ptr_table);
 }
 
 static int total_arg_size(func_entry* fe) {
@@ -115,18 +118,30 @@ static PyObject* PyAutoFunction_CallEntry(func_entry* fe, PyObject* args) {
   
 }
 
+PyObject* PyAutoFunction_Call(void* func, PyObject* args) {
+
+  char ptr_string[128];
+  sprintf(ptr_string, "%p", func);
+
+  func_entry* fe = PyAutoHashtable_Get(func_ptr_table, ptr_string);
+  if (fe != NULL) {
+    return PyAutoFunction_CallEntry(fe, args);
+  }
+  
+  return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function address '%p' is not registered!", func);
+}
+
 PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
 
-  func_entry* fe = PyAutoHashtable_Get(func_table, c_func_name);
+  func_entry* fe = PyAutoHashtable_Get(func_name_table, c_func_name);
   if (fe != NULL) {
     return PyAutoFunction_CallEntry(fe, args);
   }
   
   return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function '%s' is not registered!", c_func_name);
-
 }
 
-void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, char* name, PyAutoType type_id, int num_args, ...) {
+void PyAutoFunction_Register_TypeId(void* src_func, PyAutoCFunc ac_func, char* name, PyAutoType type_id, int num_args, ...) {
   
   if (num_args >= MAX_ARG_NUM) {
     PyErr_Format(PyExc_Exception, "PyAutoFunction: Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);
@@ -136,6 +151,7 @@ void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, char* name, PyAutoType 
   func_entry* fe = malloc(sizeof(func_entry));
   fe->name = malloc(strlen(name) + 1);
   strcpy(fe->name, name);
+  fe->src_func = src_func;
   fe->ac_func = ac_func;
   fe->type_id = type_id;
   fe->num_args = num_args;
@@ -146,6 +162,10 @@ void PyAutoFunction_Register_TypeId(PyAutoCFunc ac_func, char* name, PyAutoType 
     fe->arg_types[i] = va_arg(argl, PyAutoType);
   }
   
-  PyAutoHashtable_Set(func_table, name, fe);
+  char ptr_string[128];
+  sprintf(ptr_string, "%p", src_func);
+  
+  PyAutoHashtable_Set(func_name_table, name, fe);
+  PyAutoHashtable_Set(func_ptr_table, ptr_string, fe);
   
 }

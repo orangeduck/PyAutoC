@@ -34,8 +34,10 @@ for funcdef in funcdefs:
         in_match = re.search(r"\s*([\w\*]+)\s*(\w+)\s*", a)
         if in_match is not None: pairs.append(in_match.groups())
     voidstring = ""
-    if ctype == "void": voidstring = "Void"
-    fstring = "PyAutoFunction_RegisterArgs%i%s(%s, %s" % (len(pairs), voidstring, fname, ctype)
+    if ctype == "void":
+        fstring = "PyAutoFunction_RegisterVoid(%s, %i" % (fname, len(pairs))
+    else:
+        fstring = "PyAutoFunction_Register(%s, %s, %i" % (fname, ctype, len(pairs))
     for p in pairs: fstring += ", %s" % p[0]
     fstring += ");"
     print fstring
