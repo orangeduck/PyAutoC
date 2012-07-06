@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "PyAutoType.h"
+#include "PyAutoC.h"
 
 typedef char* type_name;
 typedef int type_size;

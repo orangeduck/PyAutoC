@@ -1,7 +1,4 @@
-#include "PyAutoStruct.h"
-#include "PyAutoHashtable.h"
-
-#include "PyAutoConvert.h"
+#include "PyAutoC.h"
 
 static PyAutoHashtable* convert_from_table;
 static PyAutoHashtable* convert_to_table;

@@ -1,10 +1,10 @@
 from distutils.core import setup, Extension
 
-pyautoc_files = ['src/PyAutoC.c', 'src/PyAutoConvert.c', 'src/PyAutoFunction.c', 'src/PyAutoStruct.c', 'src/PyAutoType.c']
+pyautoc_files = ['src/PyAutoC.c', 'src/PyAutoConvert.c', 'src/PyAutoFunction.c', 'src/PyAutoStruct.c', 'src/PyAutoType.c', "src/PyAutoHashtable.c"]
 
 demo = Extension('pyautoc_demo', sources = ['demos/demo_mod.c'] + pyautoc_files, 
-                                    include_dirs = ['./include'], library_dirs = ["./Python27/libs"], 
-                                    extra_compile_args=["--std=gnu99"])
+                                 include_dirs = ['./include'], library_dirs = ["./Python27/libs"], 
+                                 extra_compile_args=["--std=gnu99"])
 
 setup(name = 'pyautoc_demo',
       version = '1.0',

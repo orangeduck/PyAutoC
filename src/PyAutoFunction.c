@@ -1,8 +1,4 @@
-#include "PyAutoType.h"
-#include "PyAutoConvert.h"
-#include "PyAutoHashtable.h"
-
-#include "PyAutoFunction.h"
+#include "PyAutoC.h"
 
 #define MAX_ARG_NUM 10
 

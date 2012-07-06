@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "PyAutoHashtable.h"
+#include "PyAutoC.h"
 
 static int hash(char* s, int size) {
   int h = 0;

@@ -1,7 +1,4 @@
-#include "PyAutoConvert.h"
-#include "PyAutoHashtable.h"
-
-#include "PyAutoStruct.h"
+#include "PyAutoC.h"
 
 typedef struct {
   PyAutoType type;

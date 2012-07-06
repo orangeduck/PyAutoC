@@ -1,11 +1,21 @@
+/*
+** Macros to wrap function registration
+**
+** Creates an inline function
+** with a set calling convention
+*/
+
 #ifndef PyAutoFunctionMacros_h
 #define PyAutoFunctionMacros_h
 
-
+/* workaround for MSVC VA_ARGS expansion */
 #define __VA_ARGS_APPLY__(FUNC, ...) __VA_ARGS_APPLYED__(FUNC, (__VA_ARGS__))
 #define __VA_ARGS_APPLYED__(FUNC, ARGS) FUNC ARGS
 
-
+/*
+** MSVC does not allow nested functions
+** so function is wrapped in nested struct
+*/
 #ifdef _MSC_VER
 
 #define PyAutoFunction_RegisterArgs0_Macro(func, ret_t) \
