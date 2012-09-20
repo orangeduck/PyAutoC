@@ -3,13 +3,13 @@
 
 #include "PyAutoC.h"
 
-static int hash(char* s, int size) {
+static int hash(const char* s, int size) {
   int h = 0;
   while (*s) h = h * 101 + *s++;
   return abs(h) % size;
 }
 
-static PyAutoBucket* PyAutoBucket_New(char* string, void* item) {
+static PyAutoBucket* PyAutoBucket_New(const char* string, void* item) {
   
   PyAutoBucket* b = malloc(sizeof(PyAutoBucket));
   b->item = item;
@@ -51,7 +51,7 @@ void PyAutoHashtable_Delete(PyAutoHashtable* ht) {
   free(ht);
 }
 
-int PyAutoHashtable_Contains(PyAutoHashtable* ht, char* string) {
+bool PyAutoHashtable_Contains(PyAutoHashtable* ht, const char* string) {
 
   if (PyAutoHashtable_Get(ht, string) == NULL) {
     return 0;
@@ -61,7 +61,7 @@ int PyAutoHashtable_Contains(PyAutoHashtable* ht, char* string) {
 
 }
 
-void* PyAutoHashtable_Get(PyAutoHashtable* ht, char* string) {
+void* PyAutoHashtable_Get(PyAutoHashtable* ht, const char* string) {
 
   int index = hash(string, ht->size);
   PyAutoBucket* b = ht->buckets[index];
@@ -80,7 +80,7 @@ void* PyAutoHashtable_Get(PyAutoHashtable* ht, char* string) {
 
 }
 
-void PyAutoHashtable_Set(PyAutoHashtable* ht, char* string, void* item) {
+void PyAutoHashtable_Set(PyAutoHashtable* ht, const char* string, void* item) {
 
   int index = hash(string, ht->size);
   PyAutoBucket* b = ht->buckets[index];
@@ -110,7 +110,7 @@ void PyAutoHashtable_Set(PyAutoHashtable* ht, char* string, void* item) {
 
 }
 
-char* PyAutoHashtable_Find(PyAutoHashtable* ht, void* item) {
+char* PyAutoHashtable_Find(PyAutoHashtable* ht, const void* item) {
 
   for(int i = 0; i < ht->size; i++) {
     PyAutoBucket* b = ht->buckets[i];

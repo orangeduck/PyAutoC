@@ -38,7 +38,7 @@ void PyAutoStruct_Finalize() {
   
 }
 
-PyObject* PyAutoStruct_Get_TypeId(PyAutoType type, void* cstruct, int offset) {
+PyObject* PyAutoStruct_Get_TypeId(PyAutoType type, const void* cstruct, size_t offset) {
   
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
@@ -56,21 +56,21 @@ PyObject* PyAutoStruct_Get_TypeId(PyAutoType type, void* cstruct, int offset) {
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
 }
 
-int PyAutoStruct_Has_TypeId(PyAutoType type, int offset) {
+bool PyAutoStruct_Has_TypeId(PyAutoType type, size_t offset) {
   
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
     for(int j = 0; j < se->num_members; j++) {
-      if (se->members[j]->offset == offset) { return 1; }
+      if (se->members[j]->offset == offset) { return true; }
     }
-    return 0;
+    return false;
   }
   
   PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
-  return 0;
+  return false;
 }
 
-PyObject* PyAutoStruct_Set_TypeId(PyAutoType type, void* cstruct, int offset, PyObject* val) {
+PyObject* PyAutoStruct_Set_TypeId(PyAutoType type, void* cstruct, size_t offset, PyObject* val) {
 
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
@@ -89,7 +89,7 @@ PyObject* PyAutoStruct_Set_TypeId(PyAutoType type, void* cstruct, int offset, Py
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
 }
 
-PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* member) {
+PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, const void* cstruct, const char* member) {
   
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
@@ -107,25 +107,25 @@ PyObject* PyAutoStruct_GetMember_TypeId(PyAutoType type, void* cstruct, char* me
   return PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
 }
 
-int PyAutoStruct_HasMember_TypeId(PyAutoType type, char* member) {
+bool PyAutoStruct_HasMember_TypeId(PyAutoType type, const char* member) {
   
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
   
     for(int j = 0; j < se->num_members; j++) {
     if (strcmp(se->members[j]->name, member) == 0) {
-      return 1;
+      return true;
     }
     }
     
-    return 0;
+    return false;
   }
   
   PyErr_Format(PyExc_NameError, "PyAutoStruct: Struct '%s' not registered!", PyAutoType_Name(type));
-  return 0;
+  return false;
 }
 
-PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, char* member, PyObject* val) {
+PyObject* PyAutoStruct_SetMember_TypeId(PyAutoType type, void* cstruct, const char* member, PyObject* val) {
 
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
@@ -157,7 +157,7 @@ void PyAutoStruct_Register_TypeId(PyAutoType type) {
 }
 
 
-void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoType member_type, int offset) {
+void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, const char* member, PyAutoType member_type, size_t offset) {
 
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {
@@ -184,14 +184,14 @@ void PyAutoStruct_RegisterMember_TypeId(PyAutoType type, char* member, PyAutoTyp
 
 }
 
-int PyAutoStruct_IsRegistered_TypeId(PyAutoType type) {
+bool PyAutoStruct_IsRegistered_TypeId(PyAutoType type) {
   
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
-  if (se == NULL) { return 0; } else { return 1; }
+  return (se != NULL);
    
 }
 
-PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, void* cstruct) {
+PyObject* PyAutoStruct_Convert_From_TypeId(PyAutoType type, const void* cstruct) {
   
   struct_entry* se = PyAutoHashtable_Get(struct_table, PyAutoType_Name(type));
   if (se != NULL) {

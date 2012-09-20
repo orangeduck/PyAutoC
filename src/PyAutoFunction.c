@@ -127,7 +127,7 @@ PyObject* PyAutoFunction_Call(void* func, PyObject* args) {
   return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function address '%p' is not registered!", func);
 }
 
-PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
+PyObject* PyAutoFunction_CallByName(const char* c_func_name, PyObject* args) {
 
   func_entry* fe = PyAutoHashtable_Get(func_name_table, c_func_name);
   if (fe != NULL) {
@@ -137,7 +137,7 @@ PyObject* PyAutoFunction_CallByName(char* c_func_name, PyObject* args) {
   return PyErr_Format(PyExc_NameError, "PyAutoFunction: Function '%s' is not registered!", c_func_name);
 }
 
-void PyAutoFunction_Register_TypeId(void* src_func, PyAutoCFunc ac_func, char* name, PyAutoType type_id, int num_args, ...) {
+void PyAutoFunction_Register_TypeId(void* src_func, PyAutoCFunc ac_func, const char* name, PyAutoType type_id, int num_args, ...) {
   
   if (num_args >= MAX_ARG_NUM) {
     PyErr_Format(PyExc_Exception, "PyAutoFunction: Function has %i arguments - maximum supported is %i", num_args, MAX_ARG_NUM);

@@ -5,7 +5,7 @@
 #include "PyAutoC.h"
 
 typedef char* type_name;
-typedef int type_size;
+typedef size_t type_size;
 
 static type_name* type_names;
 static type_size* type_sizes;
@@ -29,7 +29,7 @@ void PyAutoType_Finalize(void) {
   free(type_sizes);
 }
 
-PyAutoType PyAutoType_Register(char* type, int size) {
+PyAutoType PyAutoType_Register(const char* type, size_t size) {
   
   for(int i = 0; i < num_types; i++) {
     if (strcmp(type, type_names[i]) == 0) return i;
@@ -49,21 +49,21 @@ PyAutoType PyAutoType_Register(char* type, int size) {
   return num_types-1;
 }
 
-PyAutoType PyAutoType_Find(char* type) {
+PyAutoType PyAutoType_Find(const char* type) {
 
   for(int i = 0; i < num_types; i++) {
     if (strcmp(type, type_names[i]) == 0) return i;
   }
   
-  return -1;
+  return PYAUTOC_INVALID_TYPE;
 }
 
-char* PyAutoType_Name(PyAutoType id) {
-  if (id == -1) return "Unknown Type";
+const char* PyAutoType_Name(PyAutoType id) {
+  if (id == PYAUTOC_INVALID_TYPE) return "Unknown Type";
   return type_names[id];
 }
 
-int PyAutoType_Size(PyAutoType id) {
-  if (id == -1) return -1;
+size_t PyAutoType_Size(PyAutoType id) {
+  if (id == PYAUTOC_INVALID_TYPE) return -1;
   return type_sizes[id];
 }

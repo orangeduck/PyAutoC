@@ -28,6 +28,20 @@ void PyAutoConvert_Initialize(void) {
   
   PyAutoConvert_RegisterFrom(void, PyAutoConvert_PrimFromVoid);
   
+  PyAutoConvert_RegisterFrom(const char, PyAutoConvert_PrimFromChar);
+  PyAutoConvert_RegisterFrom(const signed char, PyAutoConvert_PrimFromSignedChar);
+  PyAutoConvert_RegisterFrom(const unsigned char, PyAutoConvert_PrimFromUnsignedChar);
+  PyAutoConvert_RegisterFrom(const short, PyAutoConvert_PrimFromShort);
+  PyAutoConvert_RegisterFrom(const unsigned short, PyAutoConvert_PrimFromUnsignedShort);
+  PyAutoConvert_RegisterFrom(const int, PyAutoConvert_PrimFromInt);
+  PyAutoConvert_RegisterFrom(const unsigned int, PyAutoConvert_PrimFromUnsignedInt);
+  PyAutoConvert_RegisterFrom(const long, PyAutoConvert_PrimFromLong);
+  PyAutoConvert_RegisterFrom(const unsigned long, PyAutoConvert_PrimFromUnsignedLong);
+  PyAutoConvert_RegisterFrom(const long long, PyAutoConvert_PrimFromLongLong);
+  PyAutoConvert_RegisterFrom(const unsigned long long, PyAutoConvert_PrimFromUnsignedLongLong);
+  PyAutoConvert_RegisterFrom(const float, PyAutoConvert_PrimFromFloat);
+  PyAutoConvert_RegisterFrom(const double, PyAutoConvert_PrimFromDouble);
+  PyAutoConvert_RegisterFrom(const long double, PyAutoConvert_PrimFromLongDouble);
 }
 
 void PyAutoConvert_Finalize(void) {
@@ -37,7 +51,7 @@ void PyAutoConvert_Finalize(void) {
   
 }
 
-PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, void* c_val) {
+PyObject* PyAutoConvert_From_TypeId(PyAutoType type_id, const void* c_val) {
   
   PyAutoConvert_FromFunc convert_from_func = PyAutoHashtable_Get(convert_from_table, PyAutoType_Name(type_id));
   if (convert_from_func != NULL) {
@@ -86,98 +100,98 @@ void PyAutoConvert_RegisterTo_TypeId(PyAutoType type_id, PyAutoConvert_ToFunc fu
   
 }
 
-PyObject* PyAutoConvert_PrimFromChar(void* data) {
+PyObject* PyAutoConvert_PrimFromChar(const void* data) {
   return Py_BuildValue("c", data);
 }
 void PyAutoConvert_PrimToChar(PyObject* pyobj, void* out) {
   char* c = PyString_AsString(pyobj);
   *(char*)out = c[0];
 }
-PyObject* PyAutoConvert_PrimFromSignedChar(void* data) {
+PyObject* PyAutoConvert_PrimFromSignedChar(const void* data) {
   return Py_BuildValue("c", data);
 }
 void PyAutoConvert_PrimToSignedChar(PyObject* pyobj, void* out) {
   char* c = PyString_AsString(pyobj);
   *(char*)out = c[0];
 }
-PyObject* PyAutoConvert_PrimFromUnsignedChar(void* data) {
+PyObject* PyAutoConvert_PrimFromUnsignedChar(const void* data) {
   return Py_BuildValue("c", data);
 }
 void PyAutoConvert_PrimToUnsignedChar(PyObject* pyobj, void* out) {
   char* c = PyString_AsString(pyobj);
   *(char*)out = c[0];
 }
-PyObject* PyAutoConvert_PrimFromShort(void* data) {
+PyObject* PyAutoConvert_PrimFromShort(const void* data) {
   return PyInt_FromLong(*(short*)data);
 }
 void PyAutoConvert_PrimToShort(PyObject* pyobj, void* out) {
   short data = PyInt_AsLong(pyobj);
   *(short*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromUnsignedShort(void* data) {
+PyObject* PyAutoConvert_PrimFromUnsignedShort(const void* data) {
   return PyInt_FromLong(*(unsigned short*)data);
 }
 void PyAutoConvert_PrimToUnsignedShort(PyObject* pyobj, void* out) {
   unsigned short data = PyInt_AsLong(pyobj);
   *(unsigned short*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromInt(void* data) {
+PyObject* PyAutoConvert_PrimFromInt(const void* data) {
   return PyInt_FromLong(*(int*)data);
 }
 void PyAutoConvert_PrimToInt(PyObject* pyobj, void* out) {
   int data = PyInt_AsLong(pyobj);
   *(int*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromUnsignedInt(void* data) {
+PyObject* PyAutoConvert_PrimFromUnsignedInt(const void* data) {
   return PyInt_FromLong(*(unsigned int*)data);
 }
 void PyAutoConvert_PrimToUnsignedInt(PyObject* pyobj, void* out) {
   unsigned int data = PyInt_AsLong(pyobj);
   *(unsigned int*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromLong(void* data) {
+PyObject* PyAutoConvert_PrimFromLong(const void* data) {
   return PyLong_FromLong(*(long*)data);
 }
 void PyAutoConvert_PrimToLong(PyObject* pyobj, void* out) {
   long data = PyLong_AsLong(pyobj);
   *(long*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromUnsignedLong(void* data) {
+PyObject* PyAutoConvert_PrimFromUnsignedLong(const void* data) {
   return PyLong_FromUnsignedLong(*(unsigned long*)data);
 }
 void PyAutoConvert_PrimToUnsignedLong(PyObject* pyobj, void* out) {
   unsigned long data = PyLong_AsUnsignedLong(pyobj);
   *(unsigned long*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromLongLong(void* data) {
+PyObject* PyAutoConvert_PrimFromLongLong(const void* data) {
   return PyLong_FromLongLong(*(long long*)data);
 }
 void PyAutoConvert_PrimToLongLong(PyObject* pyobj, void* out) {
   long long data = PyLong_AsLongLong(pyobj);
   *(long long*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromUnsignedLongLong(void* data) {
+PyObject* PyAutoConvert_PrimFromUnsignedLongLong(const void* data) {
   return PyLong_FromUnsignedLongLong(*(unsigned long long*)data);
 }
 void PyAutoConvert_PrimToUnsignedLongLong(PyObject* pyobj, void* out) {
   unsigned long long data = PyLong_AsUnsignedLongLong(pyobj);
   *(unsigned long long*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromFloat(void* data) {
+PyObject* PyAutoConvert_PrimFromFloat(const void* data) {
   return PyFloat_FromDouble(*(float*)data);
 }
 void PyAutoConvert_PrimToFloat(PyObject* pyobj, void* out) {
   float data = PyFloat_AsDouble(pyobj);
   *(float*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromDouble(void* data) {
+PyObject* PyAutoConvert_PrimFromDouble(const void* data) {
   return PyFloat_FromDouble(*(double*)data);  
 }
 void PyAutoConvert_PrimToDouble(PyObject* pyobj, void* out) {
   double data = PyFloat_AsDouble(pyobj);
   *(double*)out = data;
 }
-PyObject* PyAutoConvert_PrimFromLongDouble(void* data) {
+PyObject* PyAutoConvert_PrimFromLongDouble(const void* data) {
   return PyFloat_FromDouble(*(long double*)data);  
 }
 void PyAutoConvert_PrimToLongDouble(PyObject* pyobj, void* out) {
@@ -185,14 +199,14 @@ void PyAutoConvert_PrimToLongDouble(PyObject* pyobj, void* out) {
   *(long double*)out = data;
 }
 
-PyObject* PyAutoConvert_PrimFromCharPtr(void* data) {
+PyObject* PyAutoConvert_PrimFromCharPtr(const void* data) {
   return PyString_FromString(*(char**)data);
 }
 void PyAutoConvert_PrimToCharPtr(PyObject* pyobj, void* out) {
   char* data = PyString_AsString(pyobj);
   *(char**)out = data;
 }
-PyObject* PyAutoConvert_PrimFromConstCharPtr(void* data) {
+PyObject* PyAutoConvert_PrimFromConstCharPtr(const void* data) {
   return PyString_FromString(*(const char**)data);
 }
 void PyAutoConvert_PrimToConstCharPtr(PyObject* pyobj, void* out) {
@@ -200,6 +214,6 @@ void PyAutoConvert_PrimToConstCharPtr(PyObject* pyobj, void* out) {
   *(const char**)out = data;
 }
 
-PyObject* PyAutoConvert_PrimFromVoid(void* data) {
+PyObject* PyAutoConvert_PrimFromVoid(const void* data) {
   Py_RETURN_NONE;
 }

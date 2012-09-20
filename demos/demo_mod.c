@@ -22,6 +22,7 @@ static PyMethodDef method_table[] = {
 	{NULL, NULL, 0, NULL},
 };
 
+/*
 PyMODINIT_FUNC initpyautoc_demo(void) {
 	PyAutoC_Initialize();
   Py_AtExit(PyAutoC_Finalize);
@@ -31,3 +32,6 @@ PyMODINIT_FUNC initpyautoc_demo(void) {
 	
   Py_InitModule("pyautoc_demo", method_table);
 }
+*/
+
+int main(int argc, char** argv) { return 0; };

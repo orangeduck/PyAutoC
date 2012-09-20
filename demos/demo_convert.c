@@ -5,7 +5,7 @@ typedef struct {
     int x, y;
 } pair;
 
-static PyObject* convert_from_pair(void* data) {
+static PyObject* convert_from_pair(const void* data) {
     pair p = *(pair*)data;
     return Py_BuildValue("(ii)", p.x, p.y);
 }

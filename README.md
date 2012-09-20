@@ -94,7 +94,7 @@ typedef struct {
   int x, y;
 } pair;
 
-static PyObject* convert_from_pair(void* data) {
+static PyObject* convert_from_pair(const void* data) {
   pair p = *(pair*)data;
   return Py_BuildValue("(ii)", p.x, p.y);
 }
@@ -325,6 +325,10 @@ FAQ
 
   Enums work like any other type and the best way to deal with them is to write an explicit conversion function. There is no real way to know what storage type compilers will pick for an enum, it could be a unsigned char, signed int, long or anything else. If though, you are sure what storage type the compiler is using for a particular enum, it might be easier to just use that as the registered type and get a conversion for free.
 
+* How do const types work?
+
+  Const types should ultimately be treated as their own unique type with custom conversion functions. But, similarly to enums, if you are careful it is often possible to reuse conversion functions you have written for non-const variations without any negative effects.
+  
 * How do I handle errors?
   
   Error handling is done via Python Exceptions. When in C, if a function returns, it returns NULL on an error. Otherwise use PyErr_Occurred(). When writing your own conversion functions it is best to propagate errors outward in a similar way.
