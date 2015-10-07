@@ -281,7 +281,7 @@ For fun why not try also overriding `__init__` and `__del__` to call some C func
 
 The true power of PyAutoC comes if you look a level deeper. If you use `PyAutoStruct_GetMember_TypeId` or `PyAutoStruct_SetMember_TypeId` you can even extend the above code to work for arbritary structs/classes which developers can add to.
 
-For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into `PyAutoType_Find`. The `PyAutoType_Find` function will lookup a string and see if a type has been registered with the same name. This means that if you give it a string of a previously registered data type E.G `birdie`, it will return a matching Id. One trick I like it to use is to feed into it the `.__class__.__name__` property of a python instance. This means that I can create a new python class with overwritten `__getattr__` and `__setattr__` it will automatically act like the corrisponding C struct with the same name.
+For this to work you need to somehow get a PyAutoType value. This can be found by feeding a string into `PyAutoType_Find`. The `PyAutoType_Find` function will lookup a string and see if a type has been registered with the same name. This means that if you give it a string of a previously registered data type E.G `birdie`, it will return a matching Id. One trick I like it to use is to feed into it the `.__class__.__name__` property of a python instance. This means that I can create a new python class with overwritten `__getattr__` and `__setattr__` it will automatically act like the corresponding C struct with the same name.
 	
 Managing Behaviour
 ------------------
