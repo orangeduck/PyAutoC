@@ -152,7 +152,7 @@ class DistributionTestCase(support.TempdirManager,
                             'long_description': 'Hehehe'})
 
         my_file2 = os.path.join(tmp_dir, 'f2')
-        dist.metadata.write_pkg_file(open(my_file, 'w'))
+        dist.metadata.write_pkg_file(open(my_file2, 'w'))
 
     def test_empty_options(self):
         # an empty options dictionary should not stay in the
